@@ -1,0 +1,9 @@
+# Local external dependencies, not versioned.
+# - AdaAggRL/: clone of github.com/yjEugenia/AdaAggRL at commit 27b9c18. To recreate:
+#   git clone https://github.com/yjEugenia/AdaAggRL.git external/AdaAggRL && git -C external/AdaAggRL checkout 27b9c18
+# - .venv_adaaggrl/: isolated venv with the versions of the official requirements.txt
+#   (torch 2.3.0, torchvision 0.18.0, numpy 1.26.4, gym 0.26.2, gymnasium 0.29.1,
+#   stable_baselines3 2.3.2, ray 2.22.0, tensorboard, Pillow 10.3.0, scipy 1.13.0, pandas 2.2.2).
+# - runs_tmp/: discarded cost measurements and smoke tests.
+*
+!.gitignore
