@@ -2,7 +2,7 @@
 
 Back to the [main README](../README.md).
 
-This is the FL framework inherited from fl-gradf. In this repository it provides the **baselines** for TRIAGE (classical rules, GRADF v1, TARS, AdaBFL, FedStrategist, AdaAggRL). The TRIAGE module itself is not implemented yet.
+This is the FL framework inherited from fl-gradf. In this repository it provides the **baselines** for TRIAGE (classical rules, GRADF v1, TARS, AdaBFL, FedStrategist, AdaAggRL). The TRIAGE module is `triage/`.
 
 - [Pipeline](#pipeline)
 - [Modules](#modules)
@@ -42,6 +42,12 @@ Exercised end to end by `tests/test_integration.py` (and by `notebooks/05_attack
 - `federated_learner.py` — `FederatedLearner`, the training loop. `_LogisticModel` (default) keeps all parameters as one flat vector `[W_flat, b]`, so every aggregation rule works on a 1-D array. `_CNNModel` (`model_type='cnn'`, `input_shape=(H, W, C)`) is a small Keras CNN with the **same** flat-vector interface, so nothing downstream changes; `_make_model` is the only dispatch point. Built-in rules: `FedAvgStrategy`, `FLTrustStrategy`.
 - `attacked_learner.py` — `AttackedFederatedLearner` injects attacks every round (gradient level via `poison_update`, data level via `poison_data`). Also hosts the informed-attacker path and `RotatingAttackedFederatedLearner` (the attack type cycles every round).
 - `gradf_learner.py` — `GRADFFederatedLearner`, which runs the full pipeline above.
+
+### TRIAGE (`triage/`)
+
+- `signals.py` — per-client signals, all oriented so that lower is more suspicious: `inversion` (S_R, gradient inversion on the logistic model), `server_cosine` (cosine to the update trained on the root dataset) and `median_cosine` (cosine to the coordinate-wise median of the round).
+- `rule.py` — `TriageRule.decide`: min-max normalization per signal, threshold `b · max`, combination of the per-signal flags (`any` / `all`) into a binary mask, weighting of the included clients (`uniform`, `soft`, `samples`) and the misbehavior counter `h` with penalty `lam ** h` (`lam = 1` disables it). Returns a `Decision`, whose `records()` gives one row per client: signals, thresholds, flags, weight, `h` and the reason for the decision.
+- `learner.py` — `TriageLearner`, an `AttackedFederatedLearner` that aggregates the clients' full parameters with the rule's weights and keeps the per-client log in `log`.
 
 ### Attacks (`classification/`)
 
@@ -137,10 +143,11 @@ data/
 ## Tests
 
 ```bash
-pytest                              # all 95 tests
+pytest                              # all 117 tests
 pytest src/detection/tests/         # detection modalities + combiner
 pytest src/classification/tests/    # attack classifier
 pytest src/defense/tests/           # aggregation rules + defense selector
+pytest src/triage/tests/            # TRIAGE signals, rule and learner
 pytest tests/test_integration.py    # full GRADF pipeline and audit trail
 pytest tests/test_utils.py          # config, metrics, logging, plotting
 ```

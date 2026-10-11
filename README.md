@@ -6,7 +6,7 @@ TRIAGE is a research project on **Byzantine-robust aggregation for Federated Lea
 - a **threshold** as the main design parameter;
 - **agreement between independent pieces of gradient evidence** as the signal.
 
-> **Status:** starting point. This repository holds the framework, baselines and prototypes inherited from [fl-gradf](https://github.com/vandersonsampaio/fl-gradf). The TRIAGE method itself is not implemented yet (TRIAGE is the thesis' GRADF-v2).
+> **Status:** starting point. This repository holds the framework, baselines and prototypes inherited from [fl-gradf](https://github.com/vandersonsampaio/fl-gradf). The TRIAGE module (`src/triage/`) has its building blocks (signals, threshold, mask, weighting, per-client log) and reproduces the AdaAggRL-skeleton variants exactly; the method's signal-agreement variants are under development (TRIAGE is the thesis' GRADF-v2).
 
 - [Background: what the fl-gradf audit established](#background-what-the-fl-gradf-audit-established)
 - [Provenance](#provenance)
@@ -58,8 +58,9 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `results/tables/` | P1 reference tables read by the prototypes: the fixed-rule grid (`exp9_…_ALL_root100_raw.csv`) and AdaAggRL per seed (`exp10_…_variantb_full_seed*_raw.csv`) | P1 |
 | `scripts/janela_execucao.sh` | Optional execution window: suspends a grid's process group on weekdays 7h–18h and resumes it afterwards | audit |
 | `data/` | Download and partitioning of MNIST/CIFAR-10 (IID and Dirichlet non-IID) | `data/download_datasets.py` |
+| `src/triage/`, `scripts/triage_parity.py`, `results/triage_parity/` | TRIAGE building blocks and their parity with the AdaAggRL-skeleton variants of fl-gradf | new |
 | `scripts/determinism_check.py`, `scripts/parity_fl_gradf.py`, `results/determinism/` | Same-seed determinism check for all baselines and parity with fl-gradf | new |
-| `tests/`, `src/**/tests/` | 96 unit and integration tests | new determinism test |
+| `tests/`, `src/**/tests/` | 117 unit and integration tests | new determinism and TRIAGE tests |
 
 Not imported: GRADF's notebooks, the paper drafts, the audit result folders and their analysis scripts, and the local references. Removed after the import: see [Provenance](#provenance).
 
