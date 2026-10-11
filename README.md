@@ -56,7 +56,8 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `scripts/passo2_oficial/` | Harness for the **official AdaAggRL code** (unedited, commit `27b9c18`): runner, fixed/TD3 conditions, reset logging, BloodMNIST adaptation (`bloodmnist_shim.py`, extractor training) | Step 2, B2.1, B3.x |
 | `scripts/pretrain_adaaggrl_extractor.py`, `results/models/` | Pretrained MNIST extractor used by the in-house AdaAggRL | P1 |
 | `results/tables/` | P1 reference tables read by the prototypes: the fixed-rule grid (`exp9_…_ALL_root100_raw.csv`) and AdaAggRL per seed (`exp10_…_variantb_full_seed*_raw.csv`) | P1 |
-| `scripts/janela_execucao.sh` | Optional execution window: suspends a grid's process group on weekdays 7h–18h and resumes it afterwards | audit |
+| `scripts/launch_grid.sh` | Runs a grid of jobs (one command per line) in its own process group, on CPU unless `GPU=1`, with per-job logs in `results/<experiment>/logs/`; `--window` adds the execution window | new |
+| `scripts/janela_execucao.sh` | Optional execution window: suspends a grid's process group on weekdays 7h–18h and resumes it afterwards; log in `results/<experiment>/logs/window.log` | audit |
 | `data/` | Download and partitioning of MNIST/CIFAR-10 (IID and Dirichlet non-IID) | `data/download_datasets.py` |
 | `data/prepare_bloodmnist.py`, `scripts/bloodmnist_sanity.py`, `results/bloodmnist_sanity/` | BloodMNIST partitions in the MNIST layout and the FedAvg sanity check (logistic and CNN) | new |
 | `src/triage/`, `scripts/triage_parity.py`, `results/triage_parity/` | TRIAGE building blocks and their parity with the AdaAggRL-skeleton variants of fl-gradf | new |
@@ -85,7 +86,10 @@ python -m src.experiments.exp9_dominance_grid --seeds 42 43 44 45 46 47 48 49 50
 python -m src.experiments.exp10_selector_comparison --variant b
 
 # AdaAggRL skeleton without RL (CPU)
-CUDA_VISIBLE_DEVICES="" python -m scripts.frente1_ablacao_adaaggrl run --mode sr_only --seeds 42
+CUDA_VISIBLE_DEVICES="" python -m scripts.frente1_ablacao_adaaggrl --out results/<experiment> run --mode sr_only --seeds 42
+
+# a grid: one command per line in jobs.txt, 4 at a time, paused on weekdays 7h-18h
+bash scripts/launch_grid.sh <experiment> jobs.txt -P 4 --window
 ```
 
 **Official AdaAggRL (GPU, isolated venv):**
@@ -100,7 +104,7 @@ external/.venv_adaaggrl/bin/python scripts/passo2_oficial/treinar_extrator_blood
 external/.venv_adaaggrl/bin/python scripts/passo2_oficial/run_b3.py --dataset BloodMNIST --attack EB --condition fixed --seed 100 --out_dir results/<experiment>/raw
 ```
 
-The inherited scripts default to fl-gradf's output folders; pass `--out_dir` (or edit `OUT`) to write elsewhere. A 500-round official run takes ~1.5 GPU-hours on an RTX 3050; 4–6 processes saturate the GPU.
+The inherited scripts default to fl-gradf's experiment folders under `results/`; pass `--out` (`b26_decomposicao`, `frente1_ablacao_adaaggrl`), `--output_dir` (`pretrain_adaaggrl_extractor`) or `--out_dir` (`passo2_oficial/`) to write to a new experiment folder. `treinar_extrator_bloodmnist.py` writes the extractor to `data/models/`, where the BloodMNIST shim reads it. A 500-round official run takes ~1.5 GPU-hours on an RTX 3050; 4–6 processes saturate the GPU.
 
 ---
 
