@@ -63,6 +63,10 @@ class RLDefenseSelector:
 
     N_STATE_DIMS = 5
 
+    # Latency feature of the state: "constant" feeds 0.0; "wallclock" feeds the measured round
+    # time, which varies between runs.
+    LATENCY_FEATURE = os.environ.get("FEDTRIAGE_GRADF_LATENCY", "constant")
+
     def __init__(
         self,
         target_update_every: int = 20,
@@ -117,6 +121,8 @@ class RLDefenseSelector:
         `src.utils.data_loader.generate_selector_experiences` (pretraining)
         and `src.fl.gradf_learner.GRADFFederatedLearner` (online learning),
         so the three sources can never silently diverge."""
+        if cls.LATENCY_FEATURE != "wallclock":
+            prev_latency = 0.0
         return np.array(
             [attack_type, confidence, prev_accuracy, prev_fairness_std, prev_latency],
             dtype=np.float32,

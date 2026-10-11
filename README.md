@@ -6,7 +6,7 @@ TRIAGE is a research project on **Byzantine-robust aggregation for Federated Lea
 - a **threshold** as the main design parameter;
 - **agreement between independent pieces of gradient evidence** as the signal.
 
-> **Status:** starting point. This repository holds the framework, baselines and prototypes inherited from [fl-gradf](https://github.com/vandersonsampaio/fl-gradf). The TRIAGE method itself is not implemented yet.
+> **Status:** starting point. This repository holds the framework, baselines and prototypes inherited from [fl-gradf](https://github.com/vandersonsampaio/fl-gradf). The TRIAGE method itself is not implemented yet (TRIAGE is the thesis' GRADF-v2).
 
 - [Background: what the fl-gradf audit established](#background-what-the-fl-gradf-audit-established)
 - [Provenance](#provenance)
@@ -40,7 +40,9 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 
 - **fl-gradf remains the reference** for GRADF v1, the P1 paper (tag `p1.0.0`) and the AdaAggRL audit. Its pre-registrations, results and frozen hashes are not copied here; they can only be verified against fl-gradf's history.
 - Only versioned files were imported, and only what the framework needs to run or what TRIAGE builds on (see [Contents](#contents)).
-- The imported code is unchanged, except for the `README` files, `.gitignore` and `external/.gitignore`. Some docstrings still mention fl-gradf result folders (e.g. `results/b26_decomposicao/`); those refer to fl-gradf.
+- The imported code is unchanged except for the determinism fix (see below), the `README` files, `.gitignore`, `external/.gitignore`, `config/config.yaml` and `setup.py`. Some docstrings still mention fl-gradf result folders (e.g. `results/b26_decomposicao/`); those refer to fl-gradf.
+- **Determinism:** every seeded learner now seeds Python, NumPy and TensorFlow/Keras at construction, and GRADF v1's DQN no longer feeds the measured round time into its state (restorable with `FEDTRIAGE_GRADF_LATENCY=wallclock`). The same seed gives exactly the same run for all 13 baselines (`scripts/determinism_check.py`, `results/determinism/`). Numbers of systems that were non-deterministic in fl-gradf (all except the AdaAggRL-based ones) therefore do not reproduce fl-gradf's exactly.
+- Removed after the import, as not needed for TRIAGE: GRADF v1's own experiments (`exp1_cnn_scale`, `exp2`, `exp3`, `exp5`–`exp8`, `runner`) and the MIMIC-III tooling (`data/download_mimic.py`, `data/merge_mimic_tables.py`, `src/utils/hospital_splitter.py`); the thesis replaced MIMIC with eICU-CRD. They remain in fl-gradf.
 
 ---
 
@@ -48,17 +50,18 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 
 | Part | What it is | Origin in fl-gradf |
 |---|---|---|
-| `src/` | FL framework (NumPy logistic model and Keras CNN), 11+ attacks, 7 aggregation rules (FedAvg, FLTrust, Median, Trimmed Mean, Krum, Clustering, FedProx), detectors, and reproductions of GRADF, TARS, AdaBFL, FedStrategist and AdaAggRL. These are the baselines | `src/` (unchanged; architecture in [`src/README.md`](src/README.md)) |
+| `src/` | FL framework (NumPy logistic model and Keras CNN), 11+ attacks, 7 aggregation rules (FedAvg, FLTrust, Median, Trimmed Mean, Krum, Clustering, FedProx), detectors, and reproductions of GRADF, TARS, AdaBFL, FedStrategist and AdaAggRL. These are the baselines; `src/experiments/` keeps `exp1`, `exp4`, `exp9` and `exp10`, which they depend on | `src/` (architecture in [`src/README.md`](src/README.md)) |
 | `scripts/frente1_ablacao_adaaggrl.py` | AdaAggRL without RL: fixed action, `sr_only`, `cos_server`, `cos_median` variants. **The closest prototype of TRIAGE's signals** | Front 1 ablation |
 | `scripts/b26_decomposicao.py` | Decomposition of the AdaAggRL skeleton: memory, binary mask vs. soft weighting, signal combination | B2.6 |
 | `scripts/passo2_oficial/` | Harness for the **official AdaAggRL code** (unedited, commit `27b9c18`): runner, fixed/TD3 conditions, reset logging, BloodMNIST adaptation (`bloodmnist_shim.py`, extractor training) | Step 2, B2.1, B3.x |
 | `scripts/pretrain_adaaggrl_extractor.py`, `results/models/` | Pretrained MNIST extractor used by the in-house AdaAggRL | P1 |
 | `results/tables/` | P1 reference tables read by the prototypes: the fixed-rule grid (`exp9_…_ALL_root100_raw.csv`) and AdaAggRL per seed (`exp10_…_variantb_full_seed*_raw.csv`) | P1 |
 | `scripts/janela_execucao.sh` | Optional execution window: suspends a grid's process group on weekdays 7h–18h and resumes it afterwards | audit |
-| `data/` | Download and partitioning of MNIST/CIFAR-10 (IID and Dirichlet non-IID); MIMIC-III tooling (needs PhysioNet credentials) | `data/` |
+| `data/` | Download and partitioning of MNIST/CIFAR-10 (IID and Dirichlet non-IID) | `data/download_datasets.py` |
+| `plans/` | Action plan and, later, requirements | new |
 | `tests/`, `src/**/tests/` | 95 unit and integration tests | unchanged |
 
-Not imported: GRADF's notebooks, the paper drafts, the audit result folders and their analysis scripts, and the local references.
+Not imported: GRADF's notebooks, the paper drafts, the audit result folders and their analysis scripts, and the local references. Removed after the import: see [Provenance](#provenance).
 
 ---
 
@@ -106,6 +109,7 @@ src/            FL framework, attacks, aggregation rules, detectors, reproduced 
 scripts/        AdaAggRL-skeleton prototypes and the official-code harness (scripts/passo2_oficial/)
 data/           dataset download and partitioning scripts (data files are not versioned)
 results/        outputs; tables/ and models/ hold the inherited P1 references
+plans/          action plan (GRADF-v2 / TRIAGE)
 tests/          integration tests (unit tests live in src/**/tests/)
 config/         FL and network hyperparameters
 external/       official AdaAggRL clone and its venv (not versioned)

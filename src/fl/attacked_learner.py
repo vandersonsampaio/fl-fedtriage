@@ -33,7 +33,7 @@ class AttackedFederatedLearner(FederatedLearner):
         seed: int = 42,
         **kwargs,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, seed=seed, **kwargs)
         self.attack_type = attack_type
         self.byzantine_ids = set(byzantine_ids or [])
         self.pretense_rounds = pretense_rounds
@@ -120,11 +120,8 @@ class InformedAttackedFederatedLearner(AttackedFederatedLearner):
     `trim_attack`, `krum_collusion`, `low_mag_backdoor`) — introduced to
     recreate headroom for adaptive defenses (severe non-IID + informed attacks).
 
-    Deliberately stronger (worst-case) than `AttackedFederatedLearner` (a
-    blind attacker that doesn't see other clients' updates) — used only for
-    this stress test, and does NOT replace the blind attacker in the already
-    published experiments (exp1/exp2/exp4/exp7), which keep their original
-    behavior.
+    Deliberately stronger (worst-case) than `AttackedFederatedLearner`, whose
+    attacker is blind to other clients' updates.
 
     `server_update` is ALWAYS computed, even when `self.aggregation !=
     'fltrust'` — same reason documented in `GRADFFederatedLearner`/

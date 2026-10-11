@@ -1,0 +1,14 @@
+fedavg         max|Δ| = 0.003300  NON-DETERMINISTIC
+fltrust        max|Δ| = 0.056800  NON-DETERMINISTIC
+median         max|Δ| = 0.003700  NON-DETERMINISTIC
+trimmed_mean   max|Δ| = 0.002300  NON-DETERMINISTIC
+krum           max|Δ| = 0.002800  NON-DETERMINISTIC
+clustering     max|Δ| = 0.003900  NON-DETERMINISTIC
+random         max|Δ| = 0.012400  NON-DETERMINISTIC
+oracle         max|Δ| = 0.023600  NON-DETERMINISTIC
+gradf          max|Δ| = 0.184800  NON-DETERMINISTIC
+fedstrategist  max|Δ| = 0.007900  NON-DETERMINISTIC
+adaaggrl       max|Δ| = 0.000000  OK
+tars           max|Δ| = 0.007000  NON-DETERMINISTIC
+adabfl         max|Δ| = 0.008100  NON-DETERMINISTIC
+DETERMINISM FAILED (3 runs compared against before_fwd.json#0)

@@ -27,6 +27,20 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+
+def seed_everything(seed: int) -> None:
+    """Seeds every global RNG a run can touch: Python, NumPy and, when TensorFlow is
+    installed, TensorFlow/Keras (weight initialization, shuffling, dropout)."""
+    import random
+
+    random.seed(seed)
+    np.random.seed(seed)
+    try:
+        from tensorflow import keras
+    except ImportError:
+        return
+    keras.utils.set_random_seed(seed)
+
 logger = logging.getLogger(__name__)
 
 
@@ -501,7 +515,10 @@ class FederatedLearner:
         root_fraction: float = 0.05,
         model_type: str = "logistic",
         input_shape: Optional[Tuple[int, int, int]] = None,
+        seed: Optional[int] = None,
     ) -> None:
+        if seed is not None:
+            seed_everything(seed)
         if aggregation not in _STRATEGIES:
             raise ValueError(
                 f"Unknown aggregation {aggregation!r}. "
@@ -521,6 +538,7 @@ class FederatedLearner:
         self.root_fraction = root_fraction
         self.model_type = model_type
         self.input_shape = input_shape
+        self.seed = seed
 
         self._strategy: AggregationStrategy = _STRATEGIES[aggregation]()
         self._global_params: Optional[np.ndarray] = None  # flat param vector
