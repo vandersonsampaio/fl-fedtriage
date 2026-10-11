@@ -58,8 +58,8 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `results/tables/` | P1 reference tables read by the prototypes: the fixed-rule grid (`exp9_…_ALL_root100_raw.csv`) and AdaAggRL per seed (`exp10_…_variantb_full_seed*_raw.csv`) | P1 |
 | `scripts/janela_execucao.sh` | Optional execution window: suspends a grid's process group on weekdays 7h–18h and resumes it afterwards | audit |
 | `data/` | Download and partitioning of MNIST/CIFAR-10 (IID and Dirichlet non-IID) | `data/download_datasets.py` |
-| `plans/` | Action plan and, later, requirements | new |
-| `tests/`, `src/**/tests/` | 95 unit and integration tests | unchanged |
+| `scripts/determinism_check.py`, `scripts/parity_fl_gradf.py`, `results/determinism/` | Same-seed determinism check for all baselines and parity with fl-gradf | new |
+| `tests/`, `src/**/tests/` | 96 unit and integration tests | new determinism test |
 
 Not imported: GRADF's notebooks, the paper drafts, the audit result folders and their analysis scripts, and the local references. Removed after the import: see [Provenance](#provenance).
 
@@ -109,7 +109,6 @@ src/            FL framework, attacks, aggregation rules, detectors, reproduced 
 scripts/        AdaAggRL-skeleton prototypes and the official-code harness (scripts/passo2_oficial/)
 data/           dataset download and partitioning scripts (data files are not versioned)
 results/        outputs; tables/ and models/ hold the inherited P1 references
-plans/          action plan (GRADF-v2 / TRIAGE)
 tests/          integration tests (unit tests live in src/**/tests/)
 config/         FL and network hyperparameters
 external/       official AdaAggRL clone and its venv (not versioned)
