@@ -58,6 +58,7 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `results/tables/` | P1 reference tables read by the prototypes: the fixed-rule grid (`exp9_…_ALL_root100_raw.csv`) and AdaAggRL per seed (`exp10_…_variantb_full_seed*_raw.csv`) | P1 |
 | `scripts/janela_execucao.sh` | Optional execution window: suspends a grid's process group on weekdays 7h–18h and resumes it afterwards | audit |
 | `data/` | Download and partitioning of MNIST/CIFAR-10 (IID and Dirichlet non-IID) | `data/download_datasets.py` |
+| `data/prepare_bloodmnist.py`, `scripts/bloodmnist_sanity.py`, `results/bloodmnist_sanity/` | BloodMNIST partitions in the MNIST layout and the FedAvg sanity check (logistic and CNN) | new |
 | `src/triage/`, `scripts/triage_parity.py`, `results/triage_parity/` | TRIAGE building blocks and their parity with the AdaAggRL-skeleton variants of fl-gradf | new |
 | `scripts/determinism_check.py`, `scripts/parity_fl_gradf.py`, `results/determinism/` | Same-seed determinism check for all baselines and parity with fl-gradf | new |
 | `tests/`, `src/**/tests/` | 117 unit and integration tests | new determinism and TRIAGE tests |
