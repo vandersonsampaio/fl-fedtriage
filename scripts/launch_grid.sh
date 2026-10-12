@@ -35,7 +35,7 @@ while IFS= read -r line; do
   n=$((n + 1))
   printf '{ %s\n} > %s/job_%03d.log 2>&1\n' "$line" "$LOGS" "$n" > "$(printf '%s/jobs/job_%03d.sh' "$LOGS" "$n")"
 done < "$JOBS"
-setsid bash -c "ls '$LOGS'/jobs/job_*.sh | xargs -P $P -n 1 nice -n 19 bash" > "$LOGS/launcher.log" 2>&1 &
+setsid bash -c "ls '$LOGS'/jobs/job_*.sh | sort -V | xargs -P $P -n 1 nice -n 19 bash" > "$LOGS/launcher.log" 2>&1 &
 PGID=$!
 echo "$EXP: $n jobs, $P in parallel, PGID $PGID, logs in $LOGS"
 if [ "$WINDOW" = 1 ]; then
