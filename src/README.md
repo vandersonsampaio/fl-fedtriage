@@ -45,9 +45,9 @@ Exercised end to end by `tests/test_integration.py` (and by `notebooks/05_attack
 
 ### TRIAGE (`triage/`)
 
-- `signals.py` — per-client signals, all oriented so that lower is more suspicious: `inversion` (S_R, gradient inversion on the logistic model), `server_cosine` (cosine to the update trained on the root dataset) and `median_cosine` (cosine to the coordinate-wise median of the round).
-- `rule.py` — `TriageRule.decide`: min-max normalization per signal, threshold `b · max`, combination of the per-signal flags (`any` / `all`) into a binary mask, weighting of the included clients (`uniform`, `soft`, `samples`) and the misbehavior counter `h` with penalty `lam ** h` (`lam = 1` disables it). Returns a `Decision`, whose `records()` gives one row per client: signals, thresholds, flags, weight, `h` and the reason for the decision.
-- `learner.py` — `TriageLearner`, an `AttackedFederatedLearner` that aggregates the clients' full parameters with the rule's weights and keeps the per-client log in `log`.
+- `signals.py` — per-client signals, all oriented so that lower is more suspicious: `inversion` (S_R, gradient inversion on the logistic model), `server_cosine` (cosine to the update trained on the root dataset), and the signals that need neither inversion nor root: `median_cosine` (cosine to the coordinate-wise median of the round), `neg_norm`, `neg_median_distance` (negative L2 distance to that median) and `temporal_cosine` (cosine to the client's own previous update).
+- `rule.py` — `TriageRule.decide`: min-max normalization per signal, threshold `b · max` or median − k·MAD, combination of the signals into a binary mask (`any`, `all`, `confidence`: the signal with the largest gap in the round, `min_rank`: each client's lowest rank), weighting of the included clients (`uniform`, `soft`, `samples`) and the misbehavior counter `h` with penalty `lam ** h` (`lam = 1` disables it). Returns a `Decision`, whose `records()` gives one row per client: signals, thresholds, flags, weight, `h` and the reason for the decision.
+- `learner.py` — `TriageLearner`, an `AttackedFederatedLearner` that aggregates the clients' full parameters with the rule's weights and keeps the per-client log in `log` (with `is_byz` and any extra signal listed in `observe`).
 
 ### Attacks (`classification/`)
 
@@ -143,7 +143,7 @@ data/
 ## Tests
 
 ```bash
-pytest                              # all 117 tests
+pytest                              # all 121 tests
 pytest src/detection/tests/         # detection modalities + combiner
 pytest src/classification/tests/    # attack classifier
 pytest src/defense/tests/           # aggregation rules + defense selector

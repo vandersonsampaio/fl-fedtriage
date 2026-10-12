@@ -49,6 +49,28 @@ class TestTriageRule:
         np.testing.assert_array_equal(any_.included, [False, False, True, True])
         np.testing.assert_array_equal(all_.included, [True, True, True, True])
 
+    def test_confidence_uses_the_signal_with_the_largest_gap(self):
+        raw = {INVERSION: np.array([0.0, 0.1, 0.9, 1.0]), SERVER_COSINE: np.array([0.0, 0.4, 0.6, 1.0])}
+        d = TriageRule([INVERSION, SERVER_COSINE], combine="confidence").decide(raw)
+        np.testing.assert_array_equal(d.included, [False, False, True, True])
+        assert d.reasons() == ["excluded:inversion", "excluded:inversion", "included", "included"]
+
+    def test_min_rank_flags_the_lowest_rank_of_any_signal(self):
+        raw = {INVERSION: np.array([0.1, 5.0, 4.0, 3.0, 2.0]), SERVER_COSINE: np.array([0.9, 0.1, 0.8, 0.7, 0.6])}
+        d = TriageRule([INVERSION, SERVER_COSINE], b=0.25, combine="min_rank").decide(raw)
+        np.testing.assert_array_equal(d.included, [False, False, True, True, True])
+        assert d.reasons()[:2] == ["excluded:inversion", "excluded:server_cosine"]
+
+    def test_mad_threshold_flags_only_outliers(self):
+        raw = {SERVER_COSINE: np.array([-0.9, 0.80, 0.82, 0.85, 0.86, 0.88, 0.9, 0.91, 0.93, 0.95])}
+        mad = TriageRule([SERVER_COSINE], threshold="mad", k=3.0).decide(raw)
+        rel = TriageRule([SERVER_COSINE], b=0.5).decide(raw)
+        np.testing.assert_array_equal(mad.included, [False] + [True] * 9)
+        np.testing.assert_array_equal(rel.included, mad.included)
+        no_attack = {SERVER_COSINE: np.array([0.80, 0.82, 0.85, 0.86, 0.88, 0.9, 0.91, 0.93, 0.95, 0.96])}
+        assert TriageRule([SERVER_COSINE], threshold="mad").decide(no_attack).included.all()
+        assert not TriageRule([SERVER_COSINE], b=0.5).decide(no_attack).included.all()
+
     def test_memory_counter_and_penalty(self):
         rule = TriageRule([SERVER_COSINE], lam=2.0)
         d1 = rule.decide({SERVER_COSINE: np.array([0.0, 1.0, 1.0])})
@@ -86,7 +108,7 @@ class TestTriageRule:
     @pytest.mark.parametrize("kwargs", [
         {"signals": []}, {"signals": ["norm"]}, {"signals": [INVERSION], "combine": "majority"},
         {"signals": [INVERSION], "weighting": "trust"}, {"signals": [INVERSION, SERVER_COSINE], "weighting": "soft"},
-        {"signals": [INVERSION], "lam": 0.5},
+        {"signals": [INVERSION], "lam": 0.5}, {"signals": [INVERSION], "threshold": "quantile"},
     ])
     def test_invalid_configuration(self, kwargs):
         with pytest.raises(ValueError):

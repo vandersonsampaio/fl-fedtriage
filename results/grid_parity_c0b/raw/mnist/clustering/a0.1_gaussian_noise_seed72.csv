@@ -1,0 +1,16 @@
+dataset,model,system,alpha,attack_type,seed,round,accuracy,sec
+mnist,logistic,clustering,0.1,gaussian_noise,72,1,0.3081,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,2,0.33840000000000003,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,3,0.39990000000000003,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,4,0.5113999999999999,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,5,0.5268,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,6,0.5513,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,7,0.5741999999999999,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,8,0.5495,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,9,0.5683,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,10,0.6136999999999999,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,11,0.5914,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,12,0.6309,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,13,0.6113999999999999,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,14,0.6174999999999999,16.204973459243774
+mnist,logistic,clustering,0.1,gaussian_noise,72,15,0.6173,16.204973459243774

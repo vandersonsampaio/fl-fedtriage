@@ -246,3 +246,6 @@ results/*/raw/grid.pgid
 
 # Local planning notes (not versioned)
 plans/
+
+# Grid launcher logs and job scripts
+results/*/logs/

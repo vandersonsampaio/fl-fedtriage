@@ -1,0 +1,16 @@
+dataset,model,system,alpha,attack_type,seed,round,accuracy,sec
+mnist,logistic,cosserver_only,0.5,label_flipping,72,1,0.7361000000000001,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,2,0.819,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,3,0.8516999999999999,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,4,0.8633,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,5,0.8785000000000001,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,6,0.8700999999999999,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,7,0.8870999999999999,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,8,0.8718999999999999,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,9,0.8867,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,10,0.8859,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,11,0.8911,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,12,0.8891,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,13,0.8942000000000002,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,14,0.8869,40.73336100578308
+mnist,logistic,cosserver_only,0.5,label_flipping,72,15,0.8878,40.73336100578308

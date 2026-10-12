@@ -61,8 +61,10 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `data/` | Download and partitioning of MNIST/CIFAR-10 (IID and Dirichlet non-IID) | `data/download_datasets.py` |
 | `data/prepare_bloodmnist.py`, `scripts/bloodmnist_sanity.py`, `results/bloodmnist_sanity/`, `results/bloodmnist_ceiling/` | BloodMNIST partitions in the MNIST layout, the FedAvg sanity check and the no-attack ceilings at H = 150 (logistic and CNN) | new |
 | `src/triage/`, `scripts/triage_parity.py`, `results/triage_parity/` | TRIAGE building blocks and their parity with the AdaAggRL-skeleton variants of fl-gradf | new |
+| `scripts/triage_grid.py`, `scripts/triage_compare.py`, `scripts/signal_auc.py` | Grid runner (rules, ceilings, TRIAGE configurations; per-client logs), paired comparison with the references, and per-attack AUC of each signal | new |
+| `results/c0b_reference/`, `results/grid_parity_c0b/` | fl-gradf's C0b tables (MNIST, H = 150, seeds 72–81) and their parity with `triage_grid.py` | new |
 | `scripts/determinism_check.py`, `scripts/parity_fl_gradf.py`, `results/determinism/` | Same-seed determinism check for all baselines and parity with fl-gradf | new |
-| `tests/`, `src/**/tests/` | 117 unit and integration tests | new determinism and TRIAGE tests |
+| `tests/`, `src/**/tests/` | 121 unit and integration tests | new determinism and TRIAGE tests |
 
 Not imported: GRADF's notebooks, the paper drafts, the audit result folders and their analysis scripts, and the local references. Removed after the import: see [Provenance](#provenance).
 

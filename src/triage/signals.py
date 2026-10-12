@@ -1,13 +1,16 @@
 """Per-client signals. Every signal is oriented so that a LOWER value is more suspicious."""
 
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 
 import numpy as np
 
 INVERSION = "inversion"
 SERVER_COSINE = "server_cosine"
 MEDIAN_COSINE = "median_cosine"
-SIGNALS = (INVERSION, SERVER_COSINE, MEDIAN_COSINE)
+NEG_NORM = "neg_norm"
+NEG_MEDIAN_DISTANCE = "neg_median_distance"
+TEMPORAL_COSINE = "temporal_cosine"
+SIGNALS = (INVERSION, SERVER_COSINE, MEDIAN_COSINE, NEG_NORM, NEG_MEDIAN_DISTANCE, TEMPORAL_COSINE)
 
 
 def cosine(a: np.ndarray, b: np.ndarray) -> float:
@@ -23,6 +26,23 @@ def median_cosine(updates: Sequence[np.ndarray]) -> np.ndarray:
     """Cosine of each client update to the coordinate-wise median of the round's updates."""
     med = np.median(np.stack(updates), axis=0)
     return np.array([cosine(u, med) for u in updates])
+
+
+def neg_norm(updates: Sequence[np.ndarray]) -> np.ndarray:
+    """Negative L2 norm of each update."""
+    return -np.array([np.linalg.norm(u) for u in updates])
+
+
+def neg_median_distance(updates: Sequence[np.ndarray]) -> np.ndarray:
+    """Negative L2 distance of each update to the coordinate-wise median of the round's updates."""
+    med = np.median(np.stack(updates), axis=0)
+    return -np.array([np.linalg.norm(u - med) for u in updates])
+
+
+def temporal_cosine(updates: Sequence[np.ndarray], previous: Sequence[Optional[np.ndarray]]) -> np.ndarray:
+    """Cosine of each client's update to its own update of the previous round; 1.0 when the
+    client has no previous update."""
+    return np.array([1.0 if p is None else cosine(u, p) for u, p in zip(updates, previous)])
 
 
 def inversion_score(

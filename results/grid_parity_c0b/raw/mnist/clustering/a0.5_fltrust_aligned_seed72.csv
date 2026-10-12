@@ -1,0 +1,16 @@
+dataset,model,system,alpha,attack_type,seed,round,accuracy,sec
+mnist,logistic,clustering,0.5,fltrust_aligned,72,1,0.7428,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,2,0.7795000000000001,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,3,0.7932,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,4,0.8052999999999999,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,5,0.8183999999999999,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,6,0.8258999999999999,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,7,0.8343999999999999,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,8,0.8412,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,9,0.8448999999999998,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,10,0.8486,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,11,0.8512000000000001,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,12,0.8543,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,13,0.8560000000000001,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,14,0.8591,38.093271255493164
+mnist,logistic,clustering,0.5,fltrust_aligned,72,15,0.8602000000000001,38.093271255493164

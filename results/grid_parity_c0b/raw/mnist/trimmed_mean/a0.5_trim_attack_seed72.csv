@@ -1,0 +1,16 @@
+dataset,model,system,alpha,attack_type,seed,round,accuracy,sec
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,1,0.6556,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,2,0.7384000000000001,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,3,0.7822000000000001,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,4,0.8067,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,5,0.8247,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,6,0.8356999999999999,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,7,0.8436999999999999,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,8,0.8506,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,9,0.8541000000000001,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,10,0.8583000000000001,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,11,0.8621000000000001,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,12,0.8640000000000001,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,13,0.867,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,14,0.8683,27.910450220108032
+mnist,logistic,trimmed_mean,0.5,trim_attack,72,15,0.8684000000000001,27.910450220108032
