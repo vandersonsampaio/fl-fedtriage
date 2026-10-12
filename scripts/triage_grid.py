@@ -64,6 +64,10 @@ CONFIGS: Dict[str, dict] = {
                      lam=2.0),
     "tri_rank": dict(signals=[INVERSION, SERVER_COSINE], combine="min_rank", b=0.5, weighting="uniform",
                      lam=2.0),
+    "cos_temp_any": dict(signals=[SERVER_COSINE, TEMPORAL_COSINE], combine="any", b=0.5, weighting="uniform",
+                         lam=2.0),
+    "cheap_any": dict(signals=[NEG_MEDIAN_DISTANCE, TEMPORAL_COSINE], combine="any", b=0.5, weighting="uniform",
+                      lam=2.0),
 }
 SYSTEMS = RULES + CEILINGS + list(CONFIGS)
 
@@ -153,7 +157,8 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
     os.makedirs(os.path.dirname(path), exist_ok=True)
     participants, root = load_dataset_participants(dataset, split_name(alpha), 10, root_size=ROOT_SIZE,
                                                    root_seed=seed)
-    common = dict(n_rounds=rounds, n_classes=DATASETS[dataset]["n_classes"], seed=seed,
+    n_classes = DATASETS[dataset]["n_classes"]
+    common = dict(n_rounds=rounds, n_classes=n_classes, n_classes_data=n_classes, seed=seed,
                   model_type=model, input_shape=DATASETS[dataset]["input_shape"])
     t0 = time.time()
     learner = None
