@@ -145,3 +145,42 @@ class TestTriageLearner:
         with pytest.raises(ValueError):
             TriageLearner(n_rounds=1, n_classes=10, model_type="cnn", input_shape=(28, 28, 1),
                           rule=TriageRule([INVERSION]))
+
+
+class TestGridRoot:
+    def _data(self):
+        from scripts.triage_grid import make_root
+
+        participants = make_synthetic_participants(n_clients=4, n_train=60)
+        server = {"X": np.arange(600, dtype=np.float32).reshape(300, 2), "y": np.arange(300) % 10}
+        return make_root, participants, server
+
+    def test_default_tag_is_empty_and_variants_are_named(self):
+        from scripts.triage_grid import root_tag
+
+        assert root_tag() == ""
+        assert root_tag(20) == "@r20"
+        assert root_tag(100, client=2, noise=0.2) == "@c2-r100-n0.2"
+
+    def test_server_root_matches_seeded_subsample(self):
+        make_root, participants, server = self._data()
+        root = make_root(participants, server, 20, None, 0.0, 10, seed=3)
+        idx = np.random.default_rng(3).choice(300, size=20, replace=False)
+        np.testing.assert_array_equal(root["X"], server["X"][idx])
+
+    def test_anchor_root_comes_from_the_client(self):
+        make_root, participants, server = self._data()
+        root = make_root(participants, server, 30, 2, 0.0, 10, seed=0)
+        rows = {tuple(r) for r in participants[2].X_train}
+        assert len(root["y"]) == 30 and all(tuple(r) in rows for r in root["X"])
+        with pytest.raises(ValueError):
+            make_root(participants, server, 30, 0, 0.0, 10, seed=0)
+
+    def test_noise_changes_about_that_fraction_of_labels(self):
+        make_root, participants, server = self._data()
+        clean = make_root(participants, server, 300, None, 0.0, 10, seed=1)
+        noisy = make_root(participants, server, 300, None, 0.3, 10, seed=1)
+        np.testing.assert_array_equal(clean["X"], noisy["X"])
+        changed = (clean["y"] != noisy["y"]).mean()
+        assert 0.2 < changed < 0.4
+        assert noisy["y"].min() >= 0 and noisy["y"].max() < 10

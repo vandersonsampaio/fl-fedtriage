@@ -13,7 +13,12 @@ Systems:
   TRIAGE      every entry of CONFIGS (a TriageRule configuration)
 
 Cells: α ∈ {0.5, 0.1, 0.05} × 7 attacks, without fltrust_aligned at α ∈ {0.1, 0.05} (19 cells);
-clients 0 and 1 Byzantine; root of 100 samples drawn with the seed.
+clients 0 and 1 Byzantine; root of 100 samples drawn with the seed from the server validation set.
+
+Root variants (`--root_size`, `--root_client`, `--root_noise`): the root can be smaller, drawn from
+the training data of one honest client (an anchor client, which keeps its data) instead of the
+server validation set, or have a fraction of its labels replaced by a different random class. A
+non-default root appends a tag to the system name, e.g. `cos_bin@r20` or `cos_bin@c2-r100-n0.2`.
 
 Usage (CPU):
   venv/bin/python -m scripts.triage_grid cell --dataset mnist --system sr_bin --alpha 0.1 \\
@@ -68,6 +73,12 @@ CONFIGS: Dict[str, dict] = {
                          lam=2.0),
     "cheap_any": dict(signals=[NEG_MEDIAN_DISTANCE, TEMPORAL_COSINE], combine="any", b=0.5, weighting="uniform",
                       lam=2.0),
+    "cos_mad2": dict(signals=[SERVER_COSINE], threshold="mad", k=2.0, weighting="uniform", lam=2.0),
+    "cos_mad3": dict(signals=[SERVER_COSINE], threshold="mad", k=3.0, weighting="uniform", lam=2.0),
+    "tri_all_mad2": dict(signals=[INVERSION, SERVER_COSINE], combine="all", threshold="mad", k=2.0,
+                         weighting="uniform", lam=2.0),
+    "tri_conf_mad2": dict(signals=[INVERSION, SERVER_COSINE], combine="confidence", threshold="mad", k=2.0,
+                          weighting="uniform", lam=2.0),
 }
 SYSTEMS = RULES + CEILINGS + list(CONFIGS)
 
@@ -78,6 +89,32 @@ def cells():
 
 def split_name(alpha: float) -> str:
     return "non_iid" if alpha == 0.5 else f"non_iid_a{alpha}"
+
+
+def root_tag(size: int = ROOT_SIZE, client: Optional[int] = None, noise: float = 0.0) -> str:
+    if size == ROOT_SIZE and client is None and noise == 0.0:
+        return ""
+    parts = ([f"c{client}"] if client is not None else []) + [f"r{size}"] + ([f"n{noise}"] if noise else [])
+    return "@" + "-".join(parts)
+
+
+def make_root(participants, server_root: Dict, size: int, client: Optional[int], noise: float, n_classes: int,
+              seed: int) -> Dict:
+    """Root dataset: `size` samples from the server validation set or, with `client`, from that
+    client's training data; then a fraction `noise` of the labels replaced by another class."""
+    rng = np.random.default_rng(seed)
+    if client is None:
+        X, y = server_root["X"], server_root["y"]
+    else:
+        if client in BYZ:
+            raise ValueError(f"the anchor client must be honest, got {client}")
+        X, y = participants[client].X_train, participants[client].y_train
+    idx = rng.choice(len(y), size=min(size, len(y)), replace=False)
+    X, y = X[idx], y[idx].copy()
+    if noise:
+        flip = rng.random(len(y)) < noise
+        y[flip] = (y[flip] + rng.integers(1, n_classes, flip.sum())) % n_classes
+    return {"X": X, "y": y}
 
 
 def output_path(out: str, dataset: str, system: str, alpha: float, attack: str, seed: int) -> str:
@@ -145,19 +182,21 @@ def build_oracle_learner():
 
 
 def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rounds: int, out: str,
-            model: str = "logistic", log: bool = False) -> Optional[str]:
+            model: str = "logistic", log: bool = False, root_size: int = ROOT_SIZE,
+            root_client: Optional[int] = None, root_noise: float = 0.0) -> Optional[str]:
     from src.fl.attacked_learner import AttackedFederatedLearner
     from src.triage import TriageLearner, TriageRule
     from src.utils.data_loader import load_dataset_participants
 
-    path = output_path(out, dataset, system, alpha, attack, seed)
+    name = system + root_tag(root_size, root_client, root_noise)
+    path = output_path(out, dataset, name, alpha, attack, seed)
     if os.path.exists(path):
         print(f"{path} already exists, skipping")
         return None
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    participants, root = load_dataset_participants(dataset, split_name(alpha), 10, root_size=ROOT_SIZE,
-                                                   root_seed=seed)
+    participants, server_root = load_dataset_participants(dataset, split_name(alpha), 10)
     n_classes = DATASETS[dataset]["n_classes"]
+    root = make_root(participants, server_root, root_size, root_client, root_noise, n_classes, seed)
     common = dict(n_rounds=rounds, n_classes=n_classes, n_classes_data=n_classes, seed=seed,
                   model_type=model, input_shape=DATASETS[dataset]["input_shape"])
     t0 = time.time()
@@ -185,7 +224,7 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
         raise ValueError(f"unknown system {system!r}")
     accs = [h.global_accuracy for h in history]
     sec = time.time() - t0
-    df = pd.DataFrame({"dataset": dataset, "model": model, "system": system, "alpha": alpha,
+    df = pd.DataFrame({"dataset": dataset, "model": model, "system": name, "alpha": alpha,
                        "attack_type": attack, "seed": seed, "round": np.arange(1, len(accs) + 1),
                        "accuracy": accs, "sec": sec})
     tmp = path + ".tmp"
@@ -198,9 +237,13 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
 
 
 def jobs(datasets: List[str], systems: List[str], seeds: List[int], rounds: int, out: str,
-         model: str, log: bool, attacks: Optional[List[str]] = None) -> List[str]:
+         model: str, log: bool, attacks: Optional[List[str]] = None, root_size: int = ROOT_SIZE,
+         root_client: Optional[int] = None, root_noise: float = 0.0) -> List[str]:
     lines = []
     base = 'CUDA_VISIBLE_DEVICES="" OMP_NUM_THREADS=2 venv/bin/python -m scripts.triage_grid cell'
+    tag = root_tag(root_size, root_client, root_noise)
+    root_args = (f" --root_size {root_size}" + (f" --root_client {root_client}" if root_client is not None else "")
+                 + (f" --root_noise {root_noise}" if root_noise else "")) if tag else ""
     for dataset in datasets:
         for system in systems:
             for seed in seeds:
@@ -208,11 +251,11 @@ def jobs(datasets: List[str], systems: List[str], seeds: List[int], rounds: int,
                 for alpha, attack in todo:
                     if attacks and attack not in attacks + ["none"]:
                         continue
-                    if os.path.exists(output_path(out, dataset, system, alpha, attack, seed)):
+                    if os.path.exists(output_path(out, dataset, system + tag, alpha, attack, seed)):
                         continue
                     lines.append(f"{base} --dataset {dataset} --system {system} --alpha {alpha} --attack {attack} "
                                  f"--seed {seed} --rounds {rounds} --out {out} --model {model}"
-                                 + (" --log" if log else ""))
+                                 + root_args + (" --log" if log else ""))
     return lines
 
 
@@ -238,11 +281,16 @@ def main():
     j.add_argument("--model", default="logistic", choices=["logistic", "cnn"])
     j.add_argument("--log", action="store_true")
     j.add_argument("--out", required=True)
+    for q in (c, j):
+        q.add_argument("--root_size", type=int, default=ROOT_SIZE)
+        q.add_argument("--root_client", type=int, default=None)
+        q.add_argument("--root_noise", type=float, default=0.0)
     a = p.parse_args()
+    root = dict(root_size=a.root_size, root_client=a.root_client, root_noise=a.root_noise)
     if a.cmd == "cell":
-        run_job(a.dataset, a.system, a.alpha, a.attack, a.seed, a.rounds, a.out, a.model, a.log)
+        run_job(a.dataset, a.system, a.alpha, a.attack, a.seed, a.rounds, a.out, a.model, a.log, **root)
     else:
-        print("\n".join(jobs(a.datasets, a.systems, a.seeds, a.rounds, a.out, a.model, a.log, a.attacks)))
+        print("\n".join(jobs(a.datasets, a.systems, a.seeds, a.rounds, a.out, a.model, a.log, a.attacks, **root)))
 
 
 if __name__ == "__main__":
