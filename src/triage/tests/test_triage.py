@@ -184,3 +184,26 @@ class TestGridRoot:
         changed = (clean["y"] != noisy["y"]).mean()
         assert 0.2 < changed < 0.4
         assert noisy["y"].min() >= 0 and noisy["y"].max() < 10
+
+
+class TestSecondStage:
+    def _train(self, **kw):
+        participants = make_synthetic_participants(n_clients=10, n_train=60)
+        learner = TriageLearner(n_rounds=3, n_classes=2, seed=1, attack_type="sign_flipping",
+                                byzantine_ids=[0, 1], rule=TriageRule([SERVER_COSINE]), **kw)
+        return learner, learner.train(participants, verbose=False)
+
+    def test_none_keeps_the_weighted_mean(self):
+        a, _ = self._train()
+        b, _ = self._train(second_stage=None)
+        np.testing.assert_array_equal(a.global_params, b.global_params)
+
+    def test_trimmed_mean_changes_the_aggregate(self):
+        a, _ = self._train()
+        b, hb = self._train(second_stage="trimmed_mean")
+        assert not np.array_equal(a.global_params, b.global_params)
+        assert len(hb) == 3
+
+    def test_unknown_rule_is_rejected(self):
+        with pytest.raises(ValueError):
+            TriageLearner(n_rounds=1, n_classes=2, rule=TriageRule([SERVER_COSINE]), second_stage="nope")

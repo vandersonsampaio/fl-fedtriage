@@ -3,7 +3,8 @@ from typing import Dict, List, Optional, Sequence
 import numpy as np
 
 from src.fl.attacked_learner import AttackedFederatedLearner, compute_param_updates_auto
-from src.fl.federated_learner import RoundResult
+import src.defense.aggregation_methods  # noqa: F401  (registers the robust rules)
+from src.fl.federated_learner import RoundResult, _STRATEGIES
 from src.triage.rule import TriageRule
 from src.triage.signals import (
     INVERSION, MEDIAN_COSINE, NEG_MEDIAN_DISTANCE, NEG_NORM, SERVER_COSINE, SIGNALS, TEMPORAL_COSINE,
@@ -16,12 +17,17 @@ class TriageLearner(AttackedFederatedLearner):
     `TriageRule`. `log` holds one record per client and round (`Decision.records`, plus
     `is_byz` and the raw value of every signal in `observe`, which are logged but not used).
 
+    With `second_stage` (a registered aggregation rule such as "trimmed_mean" or "clustering"),
+    the updates of the included clients are aggregated by that rule instead of by the weighted
+    mean; if the rule includes no client, every client goes to the second stage.
+
     The server update used by `server_cosine` is trained on the root dataset with the global
     NumPy RNG state saved and restored, so computing it does not change the clients' training.
     """
 
     def __init__(self, *args, rule: TriageRule, num_images: int = 16, max_iters: int = 30,
-                 record: bool = True, observe: Sequence[str] = (), **kwargs):
+                 record: bool = True, observe: Sequence[str] = (), second_stage: Optional[str] = None,
+                 **kwargs):
         kwargs.setdefault("aggregation", "fedavg")
         super().__init__(*args, **kwargs)
         unknown = set(observe) - set(SIGNALS)
@@ -30,7 +36,10 @@ class TriageLearner(AttackedFederatedLearner):
         self.signals = list(rule.signals) + [s for s in observe if s not in rule.signals]
         if INVERSION in self.signals and self.model_type != "logistic":
             raise ValueError("the inversion signal needs model_type='logistic'")
+        if second_stage is not None and second_stage not in _STRATEGIES:
+            raise ValueError(f"unknown second_stage {second_stage!r}")
         self.rule = rule
+        self.second_stage = second_stage
         self.num_images = num_images
         self.max_iters = max_iters
         self.record = record
@@ -72,8 +81,13 @@ class TriageLearner(AttackedFederatedLearner):
         decision = self.rule.decide(raw, self._h, sample_sizes=[p.n_train for p in participants])
         self._h = decision.h
 
-        theta_list = [self._global_params + u for u in updates]
-        self._global_params = sum(w * th for w, th in zip(decision.weights, theta_list))
+        if self.second_stage is None:
+            theta_list = [self._global_params + u for u in updates]
+            self._global_params = sum(w * th for w, th in zip(decision.weights, theta_list))
+        else:
+            kept = [u for u, inc in zip(updates, decision.included) if inc and not decision.fallback] or updates
+            delta, _ = _STRATEGIES[self.second_stage]().aggregate(kept)
+            self._global_params = self._global_params + delta
         if self.record:
             records = decision.records(round_num, [p.id for p in participants])
             for i, row in enumerate(records):

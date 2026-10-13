@@ -10,7 +10,8 @@ Systems:
   ceilings    ceiling_fedavg10 (no attack), oracle_fedavg8 (FedAvg over the honest clients only,
               evaluated on all 10), both once per α with attack "none"; oracle_uniform (attacked
               run in which exactly the honest clients are averaged, with uniform weights)
-  TRIAGE      every entry of CONFIGS (a TriageRule configuration)
+  TRIAGE      every entry of CONFIGS (a TriageRule configuration, plus an optional
+              `second_stage` rule that aggregates the included clients)
 
 Cells: α ∈ {0.5, 0.1, 0.05} × 7 attacks, without fltrust_aligned at α ∈ {0.1, 0.05} (19 cells);
 clients 0 and 1 Byzantine; root of 100 samples drawn with the seed from the server validation set.
@@ -79,6 +80,10 @@ CONFIGS: Dict[str, dict] = {
                          weighting="uniform", lam=2.0),
     "tri_conf_mad2": dict(signals=[INVERSION, SERVER_COSINE], combine="confidence", threshold="mad", k=2.0,
                           weighting="uniform", lam=2.0),
+    "tri_all_tm": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="uniform", lam=2.0,
+                       second_stage="trimmed_mean"),
+    "tri_all_cl": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="uniform", lam=2.0,
+                       second_stage="clustering"),
 }
 SYSTEMS = RULES + CEILINGS + list(CONFIGS)
 
@@ -217,8 +222,10 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
         history = learner.train(participants, root_data=root, verbose=False)
     elif system in CONFIGS:
         observe = [s for s in ALL_SIGNALS if s != INVERSION or model == "logistic"] if log else []
-        learner = TriageLearner(attack_type=attack, byzantine_ids=BYZ, rule=TriageRule(**CONFIGS[system]),
-                                record=log, observe=observe, **common)
+        cfg = dict(CONFIGS[system])
+        second_stage = cfg.pop("second_stage", None)
+        learner = TriageLearner(attack_type=attack, byzantine_ids=BYZ, rule=TriageRule(**cfg), record=log,
+                                observe=observe, second_stage=second_stage, **common)
         history = learner.train(participants, root_data=root, verbose=False)
     else:
         raise ValueError(f"unknown system {system!r}")
