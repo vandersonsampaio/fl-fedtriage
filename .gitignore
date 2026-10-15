@@ -249,3 +249,4 @@ plans/
 
 # Grid launcher logs and job scripts
 results/*/logs/
+results/*/logs_*/
