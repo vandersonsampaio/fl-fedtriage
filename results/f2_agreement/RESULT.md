@@ -38,3 +38,28 @@ Wins and losses are per-cell differences to `cosserver_only` beyond 2 standard e
 - **Pairing with `temporal_cosine` through `any` fails where that signal is inverted**
   (`cos_temp_any`: label flipping −5 to −17 p.p., sign flipping −2 to −21 p.p.), as predicted by
   the per-attack AUCs in `results/signal_auc/`.
+
+## Confirmation on seeds 77–81
+
+`tri_all` and `cos_bin` were run on the five held-out seeds; the other systems come from
+`results/c0b_reference/` (seeds 72–81). The output is in `seeds_77_81/`.
+
+```
+venv/bin/python -m scripts.triage_compare --dataset mnist --raw results/f2_agreement/raw \
+    --candidates tri_all --single sr_bin cosserver_only --refs cos_bin fltrust sr_b025 \
+    --seeds 77 78 79 80 81 --out results/f2_agreement/seeds_77_81
+```
+
+| `tri_all` against | seeds 72–76 | seeds 77–81 | Wilcoxon p (77–81) | seeds ahead (77–81) |
+|---|---:|---:|---:|---:|
+| best single signal (`cosserver_only`) | +0.65 | +0.80 | 0.125 | 4 / 5 |
+| per-cell oracle | −0.56 | −0.89 | 0.0625 | 0 / 5 |
+| `cos_bin` | — | +0.88 | 0.0625 | 5 / 5 |
+| `fltrust` | +0.97 | +0.88 | 0.0625 | 5 / 5 |
+| `sr_b025` | — | +1.13 | 0.0625 | 5 / 5 |
+
+`tri_all` reaches 0.882 (0.883 on seeds 72–76), with 5 wins, 11 ties and 3 losses per cell against
+`cosserver_only`, as on the development seeds. The three losses are again the label-flipping cells
+(−3.6 to −5.2 p.p.) and the largest win is again `fltrust_aligned` at α = 0.5 (+14.4 p.p.). The
+development result is reproduced: a small, consistent gain over the single signals that stays
+below the per-cell oracle.

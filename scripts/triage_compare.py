@@ -63,8 +63,10 @@ def wilcoxon(diff: np.ndarray) -> float:
     return float(stats.wilcoxon(diff).pvalue)
 
 
-def compare(dataset, raws, candidates, single, refs, margin, out):
+def compare(dataset, raws, candidates, single, refs, margin, out, seeds=None):
     d = load(dataset, raws)
+    if seeds:
+        d = d[d.seed.isin(seeds)]
     systems = candidates + single + refs
     lines, rows, cell_rows = [], [], []
     for H in HORIZONS:
@@ -124,9 +126,10 @@ def main():
     p.add_argument("--single", nargs="+", required=True)
     p.add_argument("--refs", nargs="*", default=[])
     p.add_argument("--margin", type=float, default=0.01)
+    p.add_argument("--seeds", nargs="*", type=int, default=None, help="restrict to these seeds")
     p.add_argument("--out", required=True)
     a = p.parse_args()
-    compare(a.dataset, a.raw, a.candidates, a.single, a.refs, a.margin, a.out)
+    compare(a.dataset, a.raw, a.candidates, a.single, a.refs, a.margin, a.out, a.seeds)
 
 
 if __name__ == "__main__":

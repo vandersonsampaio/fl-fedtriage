@@ -56,4 +56,39 @@ With 5 seeds, 0.0625 is the smallest two-sided Wilcoxon p-value: every seed favo
   signal), from excluding honest clients.
 - **The robust aggregation rules are weak on this dataset**: `median`, `trimmed_mean` and
   `clustering` are below plain `fedavg`.
-- These are development seeds; the confirmation on seeds 77–81 is a separate run.
+
+## Confirmation on seeds 77–81
+
+`tri_all` and all the references were run again on the five held-out seeds. The output is in
+`seeds_77_81/`.
+
+```
+venv/bin/python -m scripts.triage_compare --dataset bloodmnist --raw results/bloodmnist_reference/raw \
+    --candidates tri_all --single sr_bin cosserver_only \
+    --refs cos_bin fltrust trimmed_mean clustering median fedavg oracle_uniform \
+    --seeds 77 78 79 80 81 --out results/bloodmnist_reference/seeds_77_81
+```
+
+| `tri_all` against | seeds 72–76 | seeds 77–81 | Wilcoxon p (77–81) | seeds ahead (77–81) |
+|---|---:|---:|---:|---:|
+| best single signal (`cosserver_only`) | +3.57 | +4.03 | 0.0625 | 5 / 5 |
+| per-cell oracle | +1.31 | +1.94 | 0.19 | 4 / 5 |
+| `cos_bin` | +3.41 | +2.80 | 0.125 | 4 / 5 |
+| `fltrust` | +5.42 | +3.19 | 0.125 | 4 / 5 |
+| `fedavg` | +7.93 | +6.95 | 0.0625 | 5 / 5 |
+| `clustering` | — | +8.32 | 0.0625 | 5 / 5 |
+| `trimmed_mean` | — | +11.24 | 0.0625 | 5 / 5 |
+| `median` | — | +16.19 | 0.0625 | 5 / 5 |
+| `oracle_uniform` | −1.03 | −1.16 | 0.125 | — |
+
+- **The development result holds on the held-out seeds.** `tri_all` reaches 0.629 (0.634 on
+  seeds 72–76) and is +4.03 p.p. above the best single signal with every seed in favor. Per cell
+  it has 5 wins, 14 ties and no loss; 18 of the 19 cells are positive and the only negative one is
+  −0.05 p.p. (trim attack, α = 0.5).
+- **It stays above the per-cell oracle** (+1.94 p.p.), although on these seeds one of the five
+  seeds is below it.
+- **The largest gains are at α = 0.05 on sign flipping, Gaussian noise and Krum collusion**
+  (+7 to +11 p.p.).
+- **The `low_mag_backdoor` cells also show large gains** (+5 to +8 p.p.), but they measure only
+  the cost of excluding honest clients: the attack changes a single coordinate of the parameter
+  vector, has no trigger, and `fedavg` under it stays within 1.8 p.p. of the no-attack ceiling.
