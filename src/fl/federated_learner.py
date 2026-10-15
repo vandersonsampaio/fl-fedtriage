@@ -120,6 +120,7 @@ class RoundResult:
     per_participant_accuracy: Dict[str, float]
     trust_scores: Optional[Dict[str, float]] = None
     n_accepted: Optional[int] = None  # clients with trust_score > 0 (FLTrust)
+    attack_success_rate: Optional[float] = None  # backdoor attacks only
 
 
 # ---------------------------------------------------------------------------
@@ -598,6 +599,7 @@ class FederatedLearner:
 
         for round_num in range(self.n_rounds):
             result = self._run_round(round_num + 1, participants, root_data)
+            self._after_round(result, participants)
             self.history.append(result)
 
             if verbose:
@@ -661,6 +663,9 @@ class FederatedLearner:
             trust_scores=trust_scores,
             n_accepted=n_accepted,
         )
+
+    def _after_round(self, result: RoundResult, participants: List[ParticipantData]) -> None:
+        """Hook called after every round with the global model already updated."""
 
     def _instantiate_model(self, n_features: int):
         """Build a NEW model (default initial weights), without applying

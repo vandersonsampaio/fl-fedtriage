@@ -15,6 +15,9 @@ Systems:
 
 Cells: α ∈ {0.5, 0.1, 0.05} × 7 attacks, without fltrust_aligned at α ∈ {0.1, 0.05} (19 cells);
 clients 0 and 1 Byzantine; root of 100 samples drawn with the seed from the server validation set.
+The trigger backdoor (`backdoor_trigger`, target class 0, half of the attackers' samples poisoned)
+is outside the default cells and is requested with `--attacks backdoor_trigger`; its outputs have
+an extra `asr` column with the attack success rate of every round.
 
 Root variants (`--root_size`, `--root_client`, `--root_noise`): the root can be smaller, drawn from
 the training data of one honest client (an anchor client, which keeps its data) instead of the
@@ -48,6 +51,7 @@ DATASETS = {
 ALPHAS = [0.5, 0.1, 0.05]
 ATTACKS = ["fltrust_aligned", "trim_attack", "krum_collusion", "low_mag_backdoor",
            "sign_flipping", "gaussian_noise", "label_flipping"]
+EXTRA_ATTACKS = ["backdoor_trigger"]
 EXCLUDED = {(0.1, "fltrust_aligned"), (0.05, "fltrust_aligned")}
 BYZ = [0, 1]
 ROOT_SIZE = 100
@@ -88,8 +92,8 @@ CONFIGS: Dict[str, dict] = {
 SYSTEMS = RULES + CEILINGS + list(CONFIGS)
 
 
-def cells():
-    return [(a, t) for a in ALPHAS for t in ATTACKS if (a, t) not in EXCLUDED]
+def cells(attacks: Optional[List[str]] = None):
+    return [(a, t) for a in ALPHAS for t in (attacks or ATTACKS) if (a, t) not in EXCLUDED]
 
 
 def split_name(alpha: float) -> str:
@@ -234,12 +238,15 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
     df = pd.DataFrame({"dataset": dataset, "model": model, "system": name, "alpha": alpha,
                        "attack_type": attack, "seed": seed, "round": np.arange(1, len(accs) + 1),
                        "accuracy": accs, "sec": sec})
+    if attack in EXTRA_ATTACKS:
+        df["asr"] = [h.attack_success_rate for h in history]
     tmp = path + ".tmp"
     df.to_csv(tmp, index=False)
     if log and getattr(learner, "log", None):
         pd.DataFrame(learner.log).to_csv(path.replace(".csv", ".log.csv.gz"), index=False)
     os.replace(tmp, path)
-    print(f"{dataset} {system} α={alpha} {attack} seed={seed}: acc={accs[-1]:.4f} ({sec:.0f}s)", flush=True)
+    print(f"{dataset} {system} α={alpha} {attack} seed={seed}: acc={accs[-1]:.4f}"
+          + (f" asr={df.asr.iloc[-1]:.4f}" if "asr" in df else "") + f" ({sec:.0f}s)", flush=True)
     return path
 
 
@@ -254,10 +261,8 @@ def jobs(datasets: List[str], systems: List[str], seeds: List[int], rounds: int,
     for dataset in datasets:
         for system in systems:
             for seed in seeds:
-                todo = [(a, "none") for a in ALPHAS] if system in NO_ATTACK else cells()
+                todo = [(a, "none") for a in ALPHAS] if system in NO_ATTACK else cells(attacks)
                 for alpha, attack in todo:
-                    if attacks and attack not in attacks + ["none"]:
-                        continue
                     if os.path.exists(output_path(out, dataset, system + tag, alpha, attack, seed)):
                         continue
                     lines.append(f"{base} --dataset {dataset} --system {system} --alpha {alpha} --attack {attack} "
@@ -273,7 +278,7 @@ def main():
     c.add_argument("--dataset", required=True, choices=sorted(DATASETS))
     c.add_argument("--system", required=True, choices=SYSTEMS)
     c.add_argument("--alpha", type=float, required=True)
-    c.add_argument("--attack", required=True, choices=ATTACKS + ["none"])
+    c.add_argument("--attack", required=True, choices=ATTACKS + EXTRA_ATTACKS + ["none"])
     c.add_argument("--seed", type=int, required=True)
     c.add_argument("--rounds", type=int, default=150)
     c.add_argument("--model", default="logistic", choices=["logistic", "cnn"])
@@ -283,7 +288,7 @@ def main():
     j.add_argument("--datasets", nargs="+", default=["mnist"], choices=sorted(DATASETS))
     j.add_argument("--systems", nargs="+", required=True, choices=SYSTEMS)
     j.add_argument("--seeds", type=int, nargs="+", required=True)
-    j.add_argument("--attacks", nargs="+", default=None, choices=ATTACKS)
+    j.add_argument("--attacks", nargs="+", default=None, choices=ATTACKS + EXTRA_ATTACKS)
     j.add_argument("--rounds", type=int, default=150)
     j.add_argument("--model", default="logistic", choices=["logistic", "cnn"])
     j.add_argument("--log", action="store_true")
