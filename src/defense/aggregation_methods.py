@@ -115,8 +115,21 @@ class ClusteringStrategy(AggregationStrategy):
         )
 
 
+class NormClipStrategy(AggregationStrategy):
+    """Scales every update whose L2 norm exceeds the median norm of the round down to that
+    median, then takes the uniform mean (norm bounding, as in Sun et al., 2019, without noise)."""
+
+    def aggregate(self, updates: List[np.ndarray], **kwargs) -> Tuple[np.ndarray, Dict]:
+        stacked = np.stack(updates, axis=0)
+        norms = np.linalg.norm(stacked, axis=1)
+        bound = float(np.median(norms))
+        scale = np.minimum(1.0, bound / np.maximum(norms, 1e-12))
+        return (stacked * scale[:, None]).mean(axis=0), {"bound": bound, "n_clipped": int((scale < 1).sum())}
+
+
 register_strategy("median", MedianStrategy)
 register_strategy("trimmed_mean", TrimmedMeanStrategy)
 register_strategy("fedprox", FedProxStrategy)
 register_strategy("krum", KrumStrategy)
 register_strategy("clustering", ClusteringStrategy)
+register_strategy("norm_clip", NormClipStrategy)

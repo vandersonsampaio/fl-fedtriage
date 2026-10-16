@@ -6,7 +6,8 @@ log (signals, decision, is_byz) next to it as .log.csv.gz. Existing outputs are 
 
 Systems:
   rules       fedavg, fltrust, trimmed_mean, clustering, median, krum (server update always
-              computed, as in fl-gradf's C0b)
+              computed, as in fl-gradf's C0b); fedavg_clip (the `norm_clip` rule: updates clipped
+              to the median norm of the round, then averaged)
   ceilings    ceiling_fedavg10 (no attack), oracle_fedavg8 (FedAvg over the honest clients only,
               evaluated on all 10), both once per α with attack "none"; oracle_uniform (attacked
               run in which exactly the honest clients are averaged, with uniform weights)
@@ -56,7 +57,8 @@ EXCLUDED = {(0.1, "fltrust_aligned"), (0.05, "fltrust_aligned")}
 BYZ = [0, 1]
 ROOT_SIZE = 100
 
-RULES = ["fedavg", "fltrust", "trimmed_mean", "clustering", "median", "krum"]
+RULES = ["fedavg", "fltrust", "trimmed_mean", "clustering", "median", "krum", "fedavg_clip"]
+RULE_STRATEGY = {"fedavg_clip": "norm_clip"}
 CEILINGS = ["ceiling_fedavg10", "oracle_fedavg8", "oracle_uniform"]
 NO_ATTACK = ("ceiling_fedavg10", "oracle_fedavg8")
 CHEAP = [MEDIAN_COSINE, NEG_NORM, NEG_MEDIAN_DISTANCE, TEMPORAL_COSINE]
@@ -88,6 +90,8 @@ CONFIGS: Dict[str, dict] = {
                        second_stage="trimmed_mean"),
     "tri_all_cl": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="uniform", lam=2.0,
                        second_stage="clustering"),
+    "tri_all_clip": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="uniform", lam=2.0,
+                         second_stage="norm_clip"),
 }
 SYSTEMS = RULES + CEILINGS + list(CONFIGS)
 
@@ -211,7 +215,8 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
     t0 = time.time()
     learner = None
     if system in RULES:
-        learner = build_rule_learner()(attack_type=attack, byzantine_ids=BYZ, rule=system, **common)
+        learner = build_rule_learner()(attack_type=attack, byzantine_ids=BYZ, rule=RULE_STRATEGY.get(system, system),
+                                       **common)
         history = learner.train(participants, root_data=root, verbose=False)
     elif system == "ceiling_fedavg10":
         learner = AttackedFederatedLearner(attack_type="none", byzantine_ids=BYZ, aggregation="fedavg", **common)

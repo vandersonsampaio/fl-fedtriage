@@ -207,3 +207,30 @@ class TestSecondStage:
     def test_unknown_rule_is_rejected(self):
         with pytest.raises(ValueError):
             TriageLearner(n_rounds=1, n_classes=2, rule=TriageRule([SERVER_COSINE]), second_stage="nope")
+
+
+class TestNormClip:
+    def test_clips_to_the_median_norm_and_averages(self):
+        from src.defense.aggregation_methods import NormClipStrategy
+        updates = [np.array([1.0, 0.0]), np.array([0.0, 2.0]), np.array([30.0, 40.0])]
+        delta, meta = NormClipStrategy().aggregate(updates)
+        assert meta["bound"] == 2.0 and meta["n_clipped"] == 1
+        np.testing.assert_allclose(delta, (np.array([1.0, 0.0]) + np.array([0.0, 2.0]) + np.array([1.2, 1.6])) / 3)
+
+    def test_leaves_updates_below_the_median_unchanged(self):
+        from src.defense.aggregation_methods import NormClipStrategy
+        updates = [np.full(3, 1.0)] * 4
+        delta, meta = NormClipStrategy().aggregate(updates)
+        assert meta["n_clipped"] == 0
+        np.testing.assert_allclose(delta, np.full(3, 1.0))
+
+    def test_grid_names(self):
+        from scripts.triage_grid import CONFIGS, RULE_STRATEGY, RULES
+        assert "fedavg_clip" in RULES and RULE_STRATEGY["fedavg_clip"] == "norm_clip"
+        assert CONFIGS["tri_all_clip"]["second_stage"] == "norm_clip"
+
+    def test_second_stage_runs(self):
+        participants = make_synthetic_participants(n_clients=10, n_train=60)
+        learner = TriageLearner(n_rounds=2, n_classes=2, seed=1, attack_type="sign_flipping", byzantine_ids=[0, 1],
+                                rule=TriageRule([SERVER_COSINE]), second_stage="norm_clip")
+        assert len(learner.train(participants, verbose=False)) == 2
