@@ -234,3 +234,51 @@ class TestNormClip:
         learner = TriageLearner(n_rounds=2, n_classes=2, seed=1, attack_type="sign_flipping", byzantine_ids=[0, 1],
                                 rule=TriageRule([SERVER_COSINE]), second_stage="norm_clip")
         assert len(learner.train(participants, verbose=False)) == 2
+
+
+class TestFlame:
+    def _updates(self):
+        rng = np.random.default_rng(0)
+        base = rng.standard_normal(20)
+        honest = [base + 0.1 * rng.standard_normal(20) for _ in range(7)]
+        return honest + [-3.0 * base + 0.1 * rng.standard_normal(20) for _ in range(3)]
+
+    def test_excludes_the_opposite_minority(self):
+        from src.defense.aggregation_methods import FlameNoNoiseStrategy
+        _, meta = FlameNoNoiseStrategy().aggregate(self._updates())
+        assert not any(meta["admitted"][7:]) and sum(meta["admitted"][:7]) >= 6
+
+    def test_admitted_updates_are_clipped_to_the_median_norm(self):
+        from src.defense.aggregation_methods import FlameNoNoiseStrategy
+        updates = self._updates()
+        delta, meta = FlameNoNoiseStrategy().aggregate(updates)
+        norms = np.linalg.norm(np.stack(updates), axis=1)
+        assert meta["bound"] == pytest.approx(float(np.median(norms)))
+        clipped = [u * min(1.0, meta["bound"] / np.linalg.norm(u)) for u, ok in zip(updates, meta["admitted"]) if ok]
+        np.testing.assert_allclose(delta, np.mean(clipped, axis=0))
+
+    def test_noise_is_seeded(self):
+        from src.defense.aggregation_methods import FlameNoNoiseStrategy, FlameStrategy
+        updates = self._updates()
+        a, _ = FlameStrategy(seed=1).aggregate(updates)
+        b, _ = FlameStrategy(seed=1).aggregate(updates)
+        c, _ = FlameNoNoiseStrategy().aggregate(updates)
+        np.testing.assert_array_equal(a, b)
+        assert not np.array_equal(a, c)
+
+    def test_grid_names(self):
+        from scripts.triage_grid import CONFIGS, RULES, SEEDED_RULES
+        assert {"flame", "flame_nonoise"} <= set(RULES) and {"flame", "flame_nonoise"} == SEEDED_RULES
+        assert CONFIGS["cos_bin_clip"]["second_stage"] == "norm_clip"
+        assert CONFIGS["sr_bin_clip"]["signals"] == [INVERSION]
+
+    def test_rule_learner_runs_flame(self):
+        from scripts.triage_grid import build_rule_learner
+        participants = make_synthetic_participants(n_clients=10, n_train=60)
+        runs = []
+        for _ in range(2):
+            learner = build_rule_learner()(n_rounds=2, n_classes=2, attack_type="sign_flipping",
+                                           byzantine_ids=[0, 1], rule="flame", seed=3)
+            learner.train(participants, verbose=False)
+            runs.append(learner.global_params)
+        np.testing.assert_array_equal(runs[0], runs[1])

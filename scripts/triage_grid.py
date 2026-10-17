@@ -7,7 +7,8 @@ log (signals, decision, is_byz) next to it as .log.csv.gz. Existing outputs are 
 Systems:
   rules       fedavg, fltrust, trimmed_mean, clustering, median, krum (server update always
               computed, as in fl-gradf's C0b); fedavg_clip (the `norm_clip` rule: updates clipped
-              to the median norm of the round, then averaged)
+              to the median norm of the round, then averaged); flame and flame_nonoise (FLAME with
+              and without its noise step, the noise seeded with the job seed)
   ceilings    ceiling_fedavg10 (no attack), oracle_fedavg8 (FedAvg over the honest clients only,
               evaluated on all 10), both once per α with attack "none"; oracle_uniform (attacked
               run in which exactly the honest clients are averaged, with uniform weights)
@@ -57,8 +58,10 @@ EXCLUDED = {(0.1, "fltrust_aligned"), (0.05, "fltrust_aligned")}
 BYZ = [0, 1]
 ROOT_SIZE = 100
 
-RULES = ["fedavg", "fltrust", "trimmed_mean", "clustering", "median", "krum", "fedavg_clip"]
+RULES = ["fedavg", "fltrust", "trimmed_mean", "clustering", "median", "krum", "fedavg_clip", "flame",
+         "flame_nonoise"]
 RULE_STRATEGY = {"fedavg_clip": "norm_clip"}
+SEEDED_RULES = {"flame", "flame_nonoise"}
 CEILINGS = ["ceiling_fedavg10", "oracle_fedavg8", "oracle_uniform"]
 NO_ATTACK = ("ceiling_fedavg10", "oracle_fedavg8")
 CHEAP = [MEDIAN_COSINE, NEG_NORM, NEG_MEDIAN_DISTANCE, TEMPORAL_COSINE]
@@ -92,6 +95,8 @@ CONFIGS: Dict[str, dict] = {
                        second_stage="clustering"),
     "tri_all_clip": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="uniform", lam=2.0,
                          second_stage="norm_clip"),
+    "cos_bin_clip": dict(signals=[SERVER_COSINE], b=0.5, weighting="uniform", lam=2.0, second_stage="norm_clip"),
+    "sr_bin_clip": dict(signals=[INVERSION], b=0.5, weighting="uniform", lam=2.0, second_stage="norm_clip"),
 }
 SYSTEMS = RULES + CEILINGS + list(CONFIGS)
 
@@ -137,20 +142,22 @@ def output_path(out: str, dataset: str, system: str, alpha: float, attack: str, 
 def build_rule_learner():
     from src.experiments.exp10_selector_comparison import _make_arsenal_strategy
     from src.fl.attacked_learner import AttackedFederatedLearner, compute_param_updates_auto
-    from src.fl.federated_learner import RoundResult
+    from src.fl.federated_learner import RoundResult, _STRATEGIES
 
     class RuleLearner(AttackedFederatedLearner):
         def __init__(self, *args, rule: str, **kwargs):
             kwargs.setdefault("aggregation", "fedavg")
             super().__init__(*args, **kwargs)
             self.rule = rule
+            self._seeded = _STRATEGIES[rule](seed=self.seed) if rule in SEEDED_RULES else None
 
         def _run_round(self, round_num, participants, root_data):
             active = self._is_active(round_num)
             updates, is_byz = compute_param_updates_auto(self, participants, active, root_data)
             root = root_data or self._carve_root(participants[0])
             server_update = self._make_model(participants[0].n_features).fit(root["X"], root["y"])
-            delta, _ = _make_arsenal_strategy(self.rule, sum(is_byz)).aggregate(
+            strategy = self._seeded or _make_arsenal_strategy(self.rule, sum(is_byz))
+            delta, _ = strategy.aggregate(
                 updates, sample_sizes=[p.n_train for p in participants], server_update=server_update)
             self._global_params = self._global_params + delta
             per_acc = {p.id: self._make_model(p.n_features).accuracy(p.X_test, p.y_test) for p in participants}
