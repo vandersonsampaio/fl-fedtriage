@@ -15,6 +15,10 @@ venv/bin/python -m scripts.inclusion_diag --logs "results/collapse_diag/raw/bloo
     --out results/collapse_diag/inclusion.txt
 ```
 
+The same cell was then run with `tri_all_clip` (`--systems tri_all_clip`; summary in
+`inclusion_clip.txt`), to check whether bounding the norm of the included updates removes the
+collapse.
+
 ## Inclusion and flags by window of rounds (fraction of client-rounds)
 
 | rounds | Byzantine included | inversion flags Byzantine | cosine flags Byzantine | honest included | Byzantine / honest update norm |
@@ -39,3 +43,19 @@ venv/bin/python -m scripts.inclusion_diag --logs "results/collapse_diag/raw/bloo
   about 4 the two attackers are outweighed; beyond it they dominate the aggregate, and accuracy
   falls after round 200. The wrong inclusion starts early; only its damage is late, so H = 150 hides
   it.
+
+## With norm clipping (`tri_all_clip`)
+
+| system | H = 150 | H = 250 | H = 300 |
+|---|---:|---:|---:|
+| `oracle_uniform` | 0.671 | 0.697 | 0.702 |
+| `tri_all` | 0.625 | 0.632 | 0.491 |
+| `tri_all_clip` | 0.558 | 0.643 | 0.666 |
+| `cosserver_only` | 0.594 | 0.569 | 0.630 |
+
+- **Clipping removes the collapse.** At round 300 `tri_all_clip` is 17.5 p.p. above `tri_all` on
+  every seed (0.65–0.68 against about 0.49).
+- **It does not improve the exclusion.** The Byzantine clients are still included in 65–90% of the
+  rounds, but the norm ratio stays near 2 instead of growing to 7, which breaks the feedback loop.
+- **It converges more slowly.** At round 150 it is 6.7 p.p. below `tri_all` in this cell.
+
