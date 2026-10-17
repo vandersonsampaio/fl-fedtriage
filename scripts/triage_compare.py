@@ -32,7 +32,7 @@ C0B = "results/c0b_reference"
 KEYS = ["alpha", "attack_type", "seed"]
 
 
-def load(dataset: str, raws: List[str]) -> pd.DataFrame:
+def load(dataset: str, raws: List[str], horizons: List[int] = HORIZONS) -> pd.DataFrame:
     frames = []
     if dataset == "mnist" and os.path.exists(f"{C0B}/grade_raw.csv"):
         frames.append(pd.read_csv(f"{C0B}/grade_raw.csv")[["alpha", "attack_type", "seed", "system", "H", "accuracy"]]
@@ -42,7 +42,7 @@ def load(dataset: str, raws: List[str]) -> pd.DataFrame:
         if not files:
             continue
         d = pd.concat([pd.read_csv(f) for f in files])
-        d = d[d["round"].isin(HORIZONS)].rename(columns={"round": "H"})
+        d = d[d["round"].isin(horizons)].rename(columns={"round": "H"})
         frames.append(d[["alpha", "attack_type", "seed", "system", "H", "accuracy"]].assign(source="local"))
     d = pd.concat(frames, ignore_index=True)
     d = d.sort_values("source", key=lambda s: s.map({"local": 0, "c0b": 1}))
@@ -63,13 +63,13 @@ def wilcoxon(diff: np.ndarray) -> float:
     return float(stats.wilcoxon(diff).pvalue)
 
 
-def compare(dataset, raws, candidates, single, refs, margin, out, seeds=None):
-    d = load(dataset, raws)
+def compare(dataset, raws, candidates, single, refs, margin, out, seeds=None, horizons=HORIZONS):
+    d = load(dataset, raws, horizons)
     if seeds:
         d = d[d.seed.isin(seeds)]
     systems = candidates + single + refs
     lines, rows, cell_rows = [], [], []
-    for H in HORIZONS:
+    for H in horizons:
         w = d[(d.H == H) & d.system.isin(systems)].pivot_table(index=KEYS, columns="system", values="accuracy")
         for cand in candidates:
             needed = [cand] + single + [r for r in refs if r in w.columns]
@@ -127,9 +127,10 @@ def main():
     p.add_argument("--refs", nargs="*", default=[])
     p.add_argument("--margin", type=float, default=0.01)
     p.add_argument("--seeds", nargs="*", type=int, default=None, help="restrict to these seeds")
+    p.add_argument("--horizons", nargs="+", type=int, default=HORIZONS)
     p.add_argument("--out", required=True)
     a = p.parse_args()
-    compare(a.dataset, a.raw, a.candidates, a.single, a.refs, a.margin, a.out, a.seeds)
+    compare(a.dataset, a.raw, a.candidates, a.single, a.refs, a.margin, a.out, a.seeds, a.horizons)
 
 
 if __name__ == "__main__":
