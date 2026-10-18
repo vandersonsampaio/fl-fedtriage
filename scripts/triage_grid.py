@@ -95,6 +95,9 @@ CONFIGS: Dict[str, dict] = {
                        second_stage="clustering"),
     "tri_all_clip": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="uniform", lam=2.0,
                          second_stage="norm_clip"),
+    "tri_all_samples": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="samples",
+                            lam=2.0),
+    "tri_all_soft": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="soft", lam=2.0),
     "cos_bin_clip": dict(signals=[SERVER_COSINE], b=0.5, weighting="uniform", lam=2.0, second_stage="norm_clip"),
     "sr_bin_clip": dict(signals=[INVERSION], b=0.5, weighting="uniform", lam=2.0, second_stage="norm_clip"),
 }

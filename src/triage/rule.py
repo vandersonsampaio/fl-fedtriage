@@ -91,8 +91,8 @@ class TriageRule:
     consecutive clients; `combine="min_rank"` scales each signal to ranks in [0, 1], takes each
     client's lowest rank and applies the normalization and threshold to that score.
 
-    Weights of included clients: 1 (`uniform`), the normalized signal (`soft`, single signal
-    only) or the client's sample count (`samples`). Each weight is divided by `lam ** h`, where
+    Weights of included clients: 1 (`uniform`), the normalized signal (`soft`; the mean of the
+    normalized signals when there are several) or the client's sample count (`samples`). Each weight is divided by `lam ** h`, where
     the counter `h` grows by 1 on every round the client is excluded and decays by 1 otherwise;
     `lam = 1` disables the memory. If every weight is zero, all clients get the same weight.
     """
@@ -107,8 +107,6 @@ class TriageRule:
             raise ValueError(f"combine must be one of {COMBINERS}, got {combine!r}")
         if weighting not in WEIGHTINGS:
             raise ValueError(f"weighting must be one of {WEIGHTINGS}, got {weighting!r}")
-        if weighting == "soft" and len(signals) != 1:
-            raise ValueError("weighting='soft' needs exactly one signal")
         if threshold not in THRESHOLDS:
             raise ValueError(f"threshold must be one of {THRESHOLDS}, got {threshold!r}")
         if lam < 1.0:
@@ -157,7 +155,7 @@ class TriageRule:
         if self.weighting == "uniform":
             base = np.ones(n)
         elif self.weighting == "soft":
-            base = normalized[self.signals[0]]
+            base = np.mean([normalized[s] for s in self.signals], axis=0)
         else:
             if sample_sizes is None:
                 raise ValueError("weighting='samples' needs sample_sizes")

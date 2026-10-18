@@ -105,9 +105,15 @@ class TestTriageRule:
         assert rows[2]["weight"] == pytest.approx(1.0)
         assert minmax(raw[INVERSION]).tolist() == pytest.approx([r[f"{INVERSION}_norm"] for r in rows])
 
+    def test_soft_weighting_with_several_signals_uses_the_mean(self):
+        raw = {INVERSION: np.array([0.0, 0.5, 1.0, 1.0]), SERVER_COSINE: np.array([0.0, 1.0, 1.0, 0.5])}
+        d = TriageRule([INVERSION, SERVER_COSINE], combine="all", weighting="soft").decide(raw)
+        expected = np.array([0.0, 0.75, 1.0, 0.75])
+        np.testing.assert_allclose(d.weights, expected / expected.sum())
+
     @pytest.mark.parametrize("kwargs", [
         {"signals": []}, {"signals": ["norm"]}, {"signals": [INVERSION], "combine": "majority"},
-        {"signals": [INVERSION], "weighting": "trust"}, {"signals": [INVERSION, SERVER_COSINE], "weighting": "soft"},
+        {"signals": [INVERSION], "weighting": "trust"},
         {"signals": [INVERSION], "lam": 0.5}, {"signals": [INVERSION], "threshold": "quantile"},
     ])
     def test_invalid_configuration(self, kwargs):
