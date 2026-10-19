@@ -6,9 +6,10 @@ TRIAGE is a research project on **Byzantine-robust aggregation for Federated Lea
 - a **threshold** as the main design parameter;
 - **agreement between independent pieces of gradient evidence** as the signal.
 
-> **Status:** starting point. This repository holds the framework, baselines and prototypes inherited from [fl-gradf](https://github.com/vandersonsampaio/fl-gradf). The TRIAGE module (`src/triage/`) has its building blocks (signals, threshold, mask, weighting, per-client log) and reproduces the AdaAggRL-skeleton variants exactly; the method's signal-agreement variants are under development (TRIAGE is the thesis' GRADF-v2).
+> **Status:** development closed, confirmation preregistered. On the development seeds (72–81), `tri_all` beats the best single signal, FLTrust and FLAME on BloodMNIST, and ties the best single signal on MNIST. The configuration is frozen and its confirmation on unused seeds (62–71) is preregistered in [`results/f3_confirmation/PREREGISTRATION.md`](results/f3_confirmation/PREREGISTRATION.md) (TRIAGE is the thesis' GRADF-v2).
 
 - [Background: what the fl-gradf audit established](#background-what-the-fl-gradf-audit-established)
+- [Development results](#development-results)
 - [Provenance](#provenance)
 - [Contents](#contents)
 - [Quick start](#quick-start)
@@ -31,6 +32,33 @@ All results below are pre-registered and documented in [fl-gradf `results/`](htt
 | On BloodMNIST, the published mechanism runs in a degraded, periodic-reset regime (~31% accuracy under attack) | `results/b31_medmnist_oficial/`, `results/b33_limiar_bloodmnist/` |
 
 In short: the useful part of adaptive defense is **which clients enter the aggregate, and by what threshold**. TRIAGE asks whether making that decision explicit, from agreement between complementary signals, gives a defense that is simpler, auditable and at least as strong.
+
+---
+
+## Development results
+
+Logistic model, 10 clients (0 and 1 Byzantine), 19 attack cells, development seeds 72–76. Differences are in p.p., paired by cell and seed. BloodMNIST is reported at H = 250, where the curves level off, and MNIST at H = 150.
+
+| `tri_all` against | BloodMNIST | MNIST | source |
+|---|---:|---:|---|
+| best single signal | +3.62 (5/5 seeds) | +0.65 | `results/horizon300/`, `results/f2_agreement/` |
+| FLTrust | +5.37 (5/5) | +0.97 | `results/horizon300/`, `results/f2_agreement/` |
+| FLAME | +6.00 (5/5) | +3.28 (5/5) | `results/flame/` |
+| honest-only oracle | −1.72 | — | `results/horizon300/` |
+
+The BloodMNIST result also holds on seeds 77–81 at H = 150 (`results/bloodmnist_reference/`). The frozen configuration is:
+- exclusion only when both the inversion score and the server cosine flag the client;
+- threshold b = 0.5;
+- uniform weights;
+- no second stage.
+
+**Known limitations:**
+- No variant stops a trigger backdoor (`results/backdoor/`).
+- `tri_all` loses on label flipping on MNIST.
+- It collapses late on sign flipping at α = 0.05, after round 200 on BloodMNIST, because it has no scale control (`results/collapse_diag/`, `results/clipping_h300/`).
+- It needs a representative root of about 20 samples or more (`results/root_cost/`).
+
+The `RESULT.md` in each folder has the commands and the full tables.
 
 ---
 
@@ -64,7 +92,9 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `scripts/triage_grid.py`, `scripts/triage_compare.py`, `scripts/signal_auc.py` | Grid runner (rules, ceilings, TRIAGE configurations; per-client logs), paired comparison with the references, and per-attack AUC of each signal | new |
 | `results/c0b_reference/`, `results/grid_parity_c0b/` | fl-gradf's C0b tables (MNIST, H = 150, seeds 72–81) and their parity with `triage_grid.py` | new |
 | `scripts/determinism_check.py`, `scripts/parity_fl_gradf.py`, `results/determinism/` | Same-seed determinism check for all baselines and parity with fl-gradf | new |
-| `tests/`, `src/**/tests/` | 121 unit and integration tests | new determinism and TRIAGE tests |
+| `results/signal_auc/`, `results/f2_agreement/`, `results/f2_mad/`, `results/bloodmnist_reference/`, `results/root_cost/`, `results/backdoor/`, `results/clipping/`, `results/clipping_h300/`, `results/horizon300/`, `results/collapse_diag/`, `results/flame/`, `results/ablation_h300/` | Development experiments on seeds 72–81, each with a `RESULT.md`; `results/flame_h300/` and `results/ablation/` hold raw outputs documented in `results/flame/` and `results/ablation_h300/` | new |
+| `results/f3_confirmation/` | Frozen preregistration of the confirmation on seeds 62–71 (`PREREGISTRATION.md`, `PREREGISTRATION.sha256`) | new |
+| `tests/`, `src/**/tests/` | 148 unit and integration tests | new determinism and TRIAGE tests |
 
 Not imported: GRADF's notebooks, the paper drafts, the audit result folders and their analysis scripts, and the local references. Removed after the import: see [Provenance](#provenance).
 
@@ -77,7 +107,7 @@ python -m venv venv && source venv/bin/activate
 pip install -r requiriments.txt
 python data/download_datasets.py      # MNIST + CIFAR-10 shards under data/processed/
 python test_setup.py
-pytest                                # 95 tests
+CUDA_VISIBLE_DEVICES="" pytest         # 148 tests, on CPU
 ```
 
 Experiments are run as modules from the repository root, so that `src.*` imports resolve:
