@@ -6,9 +6,10 @@ TRIAGE is a research project on **Byzantine-robust aggregation for Federated Lea
 - a **threshold** as the main design parameter;
 - **agreement between independent pieces of gradient evidence** as the signal.
 
-> **Status:** development closed, confirmation preregistered. On the development seeds (72–81), `tri_all` beats the best single signal, FLTrust and FLAME on BloodMNIST, and ties the best single signal on MNIST. The configuration is frozen and its confirmation on unused seeds (62–71) is preregistered in [`results/f3_confirmation/PREREGISTRATION.md`](results/f3_confirmation/PREREGISTRATION.md) (TRIAGE is the thesis' GRADF-v2).
+> **Status:** confirmed on unused seeds. On seeds 62–71, under the frozen preregistration, `tri_all` beats the best single signal (+3.4 p.p.), FLTrust (+2.7) and FLAME (+6.9) on BloodMNIST, all significant after Holm, and is not inferior to the best single signal on MNIST (+0.9). See [`results/f3_confirmation/RESULT.md`](results/f3_confirmation/RESULT.md) (TRIAGE is the thesis' GRADF-v2).
 
 - [Background: what the fl-gradf audit established](#background-what-the-fl-gradf-audit-established)
+- [Confirmation results](#confirmation-results)
 - [Development results](#development-results)
 - [Provenance](#provenance)
 - [Contents](#contents)
@@ -32,6 +33,21 @@ All results below are pre-registered and documented in [fl-gradf `results/`](htt
 | On BloodMNIST, the published mechanism runs in a degraded, periodic-reset regime (~31% accuracy under attack) | `results/b31_medmnist_oficial/`, `results/b33_limiar_bloodmnist/` |
 
 In short: the useful part of adaptive defense is **which clients enter the aggregate, and by what threshold**. TRIAGE asks whether making that decision explicit, from agreement between complementary signals, gives a defense that is simpler, auditable and at least as strong.
+
+---
+
+## Confirmation results
+
+Same setting as below, on seeds 62–71, which were never used in development. The analysis is the preregistered one ([`PREREGISTRATION.md`](results/f3_confirmation/PREREGISTRATION.md)): one-sided Wilcoxon over the 10 per-seed means, with Holm per family of hypotheses.
+
+| `tri_all` against | BloodMNIST, H = 250 | MNIST, H = 150 |
+|---|---:|---:|
+| best single signal | **+3.36** (10/10 seeds, p<sub>Holm</sub> = 0.003) | +0.92, non-inferior at a 1 p.p. margin |
+| FLTrust | **+2.74** (9/10, p<sub>Holm</sub> = 0.003) | +1.36 |
+| FLAME | **+6.89** (10/10, p<sub>Holm</sub> = 0.003) | +3.47 |
+| honest-only oracle | −1.18 | −1.30 |
+
+With a 20-sample root, `tri_all` still beats the best single signal on that root (+5.73), FLTrust (+2.07) and FLAME (+4.57) on BloodMNIST, all significant after Holm. The limitations below were seen again on the confirmation seeds.
 
 ---
 
@@ -93,7 +109,7 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `results/c0b_reference/`, `results/grid_parity_c0b/` | fl-gradf's C0b tables (MNIST, H = 150, seeds 72–81) and their parity with `triage_grid.py` | new |
 | `scripts/determinism_check.py`, `scripts/parity_fl_gradf.py`, `results/determinism/` | Same-seed determinism check for all baselines and parity with fl-gradf | new |
 | `results/signal_auc/`, `results/f2_agreement/`, `results/f2_mad/`, `results/bloodmnist_reference/`, `results/root_cost/`, `results/backdoor/`, `results/clipping/`, `results/clipping_h300/`, `results/horizon300/`, `results/collapse_diag/`, `results/flame/`, `results/ablation_h300/` | Development experiments on seeds 72–81, each with a `RESULT.md`; `results/flame_h300/` and `results/ablation/` hold raw outputs documented in `results/flame/` and `results/ablation_h300/` | new |
-| `results/f3_confirmation/` | Frozen preregistration of the confirmation on seeds 62–71 (`PREREGISTRATION.md`, `PREREGISTRATION.sha256`) | new |
+| `scripts/triage_confirm.py`, `results/f3_confirmation/` | Frozen preregistration of the confirmation on seeds 62–71 (`PREREGISTRATION.md`, `PREREGISTRATION.sha256`), its raw outputs, the preregistered tests and `RESULT.md` | new |
 | `tests/`, `src/**/tests/` | 148 unit and integration tests | new determinism and TRIAGE tests |
 
 Not imported: GRADF's notebooks, the paper drafts, the audit result folders and their analysis scripts, and the local references. Removed after the import: see [Provenance](#provenance).

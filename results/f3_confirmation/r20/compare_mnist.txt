@@ -1,0 +1,37 @@
+=== mnist: candidates vs references (diff in p.p., paired by cell and seed) ===
+  H   candidate              reference  n_seeds  acc_candidate  acc_reference  diff_pp  p_wilcoxon  p_tost
+150 tri_all@r20    best_single(sr_bin)       10         0.8755         0.8534   2.2026      0.0020  0.9994
+150 tri_all@r20 oracle_single_per_cell       10         0.8755         0.8826  -0.7163      0.0098  0.1082
+150 tri_all@r20     cosserver_only@r20       10         0.8755         0.8365   3.8931      0.0020  1.0000
+150 tri_all@r20            cos_bin@r20       10         0.8755         0.8355   4.0004      0.0020  1.0000
+150 tri_all@r20                 sr_bin       10         0.8755         0.8534   2.2026      0.0020  0.9994
+150 tri_all@r20            fltrust@r20       10         0.8755         0.7771   9.8378      0.0020  1.0000
+150 tri_all@r20                  flame       10         0.8755         0.8505   2.4927      0.0020  0.9991
+
+=== mnist: per cell vs the best single signal, H = 150 ===
+candidate               tri_all@r20
+alpha attack_type                  
+0.05  gaussian_noise          -3.00
+      krum_collusion           1.50
+      label_flipping          13.98
+      low_mag_backdoor         4.43
+      sign_flipping            0.55
+      trim_attack             -0.91
+0.10  gaussian_noise          -4.08
+      krum_collusion           0.51
+      label_flipping          14.79
+      low_mag_backdoor         2.87
+      sign_flipping            3.18
+      trim_attack             -0.09
+0.50  fltrust_aligned         -0.18
+      gaussian_noise          -1.92
+      krum_collusion          -0.11
+      label_flipping          13.47
+      low_mag_backdoor         0.17
+      sign_flipping           -0.32
+      trim_attack             -3.00
+
+wins / ties / losses (beyond 2 SE):
+verdict      loss  tie  win
+candidate                  
+tri_all@r20     4    6    9

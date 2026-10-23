@@ -1,0 +1,53 @@
+=== H1–H3 and H1'–H3' (BloodMNIST, H = 250; one-sided Wilcoxon, Holm per family) ===
+        family hypothesis   candidate   reference  n_seeds  diff_pp  seeds_positive  p_one_sided  p_holm  significant
+       primary         H1     tri_all     cos_bin       10  3.36238              10      0.00098 0.00293         True
+       primary         H2     tri_all     fltrust       10  2.74390               9      0.00195 0.00293         True
+       primary         H3     tri_all       flame       10  6.88855              10      0.00098 0.00293         True
+secondary @r20        H1' tri_all@r20 cos_bin@r20       10  5.73165              10      0.00098 0.00293         True
+secondary @r20        H2' tri_all@r20 fltrust@r20       10  2.06602               8      0.00977 0.00977         True
+secondary @r20        H3' tri_all@r20       flame       10  4.56957              10      0.00098 0.00293         True
+
+=== H4 (MNIST, H = 150; margin ±1 p.p.) ===
+hypothesis candidate reference  n_seeds  diff_pp  ci90_low_pp  ci90_high_pp  p_lower  p_upper  p_tost  noninferior  equivalent
+        H4   tri_all   cos_bin       10  0.91689       0.6593       1.17449      0.0  0.28441 0.28441         True       False
+
+=== root cost: system@r20 − system (p.p.) ===
+dataset        bloodmnist             mnist
+H                     150   250   300   150
+system                                     
+cos_bin             -3.12 -4.69 -2.57 -4.06
+cosserver_only      -6.12 -5.34 -4.33 -3.36
+fltrust             -1.80 -1.64  0.17 -9.45
+tri_all             -0.69 -2.32 -1.79 -0.98
+
+=== worst case: tri_all − best fixed rule of each cell, five worst per dataset and H (p.p.) ===
+   dataset   H  alpha      attack_type best_fixed_rule  diff_pp
+bloodmnist 300   0.05    sign_flipping          fedavg   -17.00
+bloodmnist 150   0.05   label_flipping          fedavg    -9.32
+bloodmnist 150   0.50  fltrust_aligned          fedavg    -6.29
+bloodmnist 150   0.50    sign_flipping          fedavg    -5.81
+     mnist 150   0.05   label_flipping         fltrust    -5.70
+bloodmnist 250   0.50  fltrust_aligned          fedavg    -5.57
+bloodmnist 250   0.50    sign_flipping          fedavg    -5.47
+bloodmnist 150   0.50 low_mag_backdoor          fedavg    -5.36
+bloodmnist 250   0.50   label_flipping          fedavg    -4.92
+bloodmnist 250   0.10 low_mag_backdoor          fedavg    -4.77
+bloodmnist 150   0.50   label_flipping          fedavg    -4.71
+bloodmnist 300   0.50    sign_flipping          fedavg    -4.69
+bloodmnist 300   0.50  fltrust_aligned          fedavg    -4.55
+bloodmnist 300   0.10 low_mag_backdoor          fedavg    -4.19
+bloodmnist 250   0.05   label_flipping          fedavg    -3.91
+bloodmnist 300   0.50 low_mag_backdoor          fedavg    -3.90
+     mnist 150   0.10   label_flipping      clustering    -3.50
+     mnist 150   0.50   label_flipping      clustering    -3.18
+     mnist 150   0.05   gaussian_noise         fltrust    -1.89
+     mnist 150   0.50    sign_flipping      clustering    -0.95
+
+=== no-attack ceiling per α ===
+   dataset   H  alpha  ceiling_fedavg10  tri_all  gap_pp
+bloodmnist 250   0.05            0.6669   0.6773  1.0348
+bloodmnist 250   0.10            0.6228   0.5333 -8.9428
+bloodmnist 250   0.50            0.7484   0.7177 -3.0760
+     mnist 150   0.05            0.8949   0.8579 -3.6940
+     mnist 150   0.10            0.8942   0.8886 -0.5588
+     mnist 150   0.50            0.9193   0.9058 -1.3446
