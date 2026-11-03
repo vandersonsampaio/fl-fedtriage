@@ -158,7 +158,7 @@ def build_rule_learner():
             active = self._is_active(round_num)
             updates, is_byz = compute_param_updates_auto(self, participants, active, root_data)
             root = root_data or self._carve_root(participants[0])
-            server_update = self._make_model(participants[0].n_features).fit(root["X"], root["y"])
+            server_update = self._fit_server(self._make_model(participants[0].n_features), root, participants)
             strategy = self._seeded or _make_arsenal_strategy(self.rule, sum(is_byz))
             delta, _ = strategy.aggregate(
                 updates, sample_sizes=[p.n_train for p in participants], server_update=server_update)
@@ -204,14 +204,19 @@ def build_oracle_learner():
     return OracleUniformLearner, OracleFedAvg8Learner
 
 
+def steps_tag(server_steps: str = "native") -> str:
+    return "" if server_steps == "native" else f"@st{server_steps}"
+
+
 def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rounds: int, out: str,
             model: str = "logistic", log: bool = False, root_size: int = ROOT_SIZE,
-            root_client: Optional[int] = None, root_noise: float = 0.0) -> Optional[str]:
+            root_client: Optional[int] = None, root_noise: float = 0.0,
+            server_steps: str = "native") -> Optional[str]:
     from src.fl.attacked_learner import AttackedFederatedLearner
     from src.triage import TriageLearner, TriageRule
     from src.utils.data_loader import load_dataset_participants
 
-    name = system + root_tag(root_size, root_client, root_noise)
+    name = system + root_tag(root_size, root_client, root_noise) + steps_tag(server_steps)
     path = output_path(out, dataset, name, alpha, attack, seed)
     if os.path.exists(path):
         print(f"{path} already exists, skipping")
@@ -221,7 +226,7 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
     n_classes = DATASETS[dataset]["n_classes"]
     root = make_root(participants, server_root, root_size, root_client, root_noise, n_classes, seed)
     common = dict(n_rounds=rounds, n_classes=n_classes, n_classes_data=n_classes, seed=seed,
-                  model_type=model, input_shape=DATASETS[dataset]["input_shape"])
+                  model_type=model, input_shape=DATASETS[dataset]["input_shape"], server_steps=server_steps)
     t0 = time.time()
     learner = None
     if system in RULES:
@@ -252,7 +257,7 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
     sec = time.time() - t0
     df = pd.DataFrame({"dataset": dataset, "model": model, "system": name, "alpha": alpha,
                        "attack_type": attack, "seed": seed, "round": np.arange(1, len(accs) + 1),
-                       "accuracy": accs, "sec": sec})
+                       "accuracy": accs, "sec": sec, "server_steps": server_steps})
     if attack in EXTRA_ATTACKS:
         df["asr"] = [h.attack_success_rate for h in history]
     tmp = path + ".tmp"
@@ -267,12 +272,13 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
 
 def jobs(datasets: List[str], systems: List[str], seeds: List[int], rounds: int, out: str,
          model: str, log: bool, attacks: Optional[List[str]] = None, root_size: int = ROOT_SIZE,
-         root_client: Optional[int] = None, root_noise: float = 0.0) -> List[str]:
+         root_client: Optional[int] = None, root_noise: float = 0.0, server_steps: str = "native") -> List[str]:
     lines = []
     base = 'CUDA_VISIBLE_DEVICES="" OMP_NUM_THREADS=2 venv/bin/python -m scripts.triage_grid cell'
-    tag = root_tag(root_size, root_client, root_noise)
+    tag = root_tag(root_size, root_client, root_noise) + steps_tag(server_steps)
     root_args = (f" --root_size {root_size}" + (f" --root_client {root_client}" if root_client is not None else "")
-                 + (f" --root_noise {root_noise}" if root_noise else "")) if tag else ""
+                 + (f" --root_noise {root_noise}" if root_noise else "")
+                 + (f" --server_steps {server_steps}" if server_steps != "native" else "")) if tag else ""
     for dataset in datasets:
         for system in systems:
             for seed in seeds:
@@ -312,8 +318,10 @@ def main():
         q.add_argument("--root_size", type=int, default=ROOT_SIZE)
         q.add_argument("--root_client", type=int, default=None)
         q.add_argument("--root_noise", type=float, default=0.0)
+        q.add_argument("--server_steps", default="native")
     a = p.parse_args()
-    root = dict(root_size=a.root_size, root_client=a.root_client, root_noise=a.root_noise)
+    root = dict(root_size=a.root_size, root_client=a.root_client, root_noise=a.root_noise,
+                server_steps=a.server_steps)
     if a.cmd == "cell":
         run_job(a.dataset, a.system, a.alpha, a.attack, a.seed, a.rounds, a.out, a.model, a.log, **root)
     else:

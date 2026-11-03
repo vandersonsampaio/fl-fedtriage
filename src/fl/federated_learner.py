@@ -23,7 +23,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -517,6 +517,7 @@ class FederatedLearner:
         model_type: str = "logistic",
         input_shape: Optional[Tuple[int, int, int]] = None,
         seed: Optional[int] = None,
+        server_steps: Union[str, int] = "native",
     ) -> None:
         if seed is not None:
             seed_everything(seed)
@@ -536,6 +537,11 @@ class FederatedLearner:
         self.local_lr = local_lr
         self.local_epochs = local_epochs
         self.local_batch_size = local_batch_size
+        if server_steps not in ("native", "median") and not (
+            str(server_steps).isdigit() and int(server_steps) > 0
+        ):
+            raise ValueError(f"server_steps must be 'native', 'median' or a positive int, got {server_steps!r}")
+        self.server_steps = server_steps
         self.root_fraction = root_fraction
         self.model_type = model_type
         self.input_shape = input_shape
@@ -635,7 +641,7 @@ class FederatedLearner:
         agg_kwargs: Dict = {}
         if self.aggregation == "fltrust":
             server_model = self._make_model(participants[0].n_features)
-            server_delta = server_model.fit(root_data["X"], root_data["y"])  # type: ignore[index]
+            server_delta = self._fit_server(server_model, root_data, participants)  # type: ignore[arg-type]
             agg_kwargs["server_update"] = server_delta
         else:
             agg_kwargs["sample_sizes"] = [p.n_train for p in participants]
@@ -689,6 +695,28 @@ class FederatedLearner:
             n_epochs=self.local_epochs,
             batch_size=self.local_batch_size,
         )
+
+    def _server_step_count(self, participants: List[ParticipantData]) -> Optional[int]:
+        """SGD steps of the server fit; None for the epoch-based path."""
+        if self.server_steps == "native":
+            return None
+        if self.server_steps == "median":
+            per_client = [int(np.ceil(p.n_train / self.local_batch_size)) * self.local_epochs
+                          for p in participants]
+            return int(np.median(per_client))
+        return int(self.server_steps)
+
+    def _fit_server(self, model, root: Dict[str, np.ndarray],
+                    participants: List[ParticipantData]) -> np.ndarray:
+        """The server's root-data update, from `model` already set to the global params.
+        Native: `model.fit` on the root (epochs). Otherwise: `steps` mini-batches drawn
+        from the root and one pass."""
+        steps = self._server_step_count(participants)
+        if steps is None:
+            return model.fit(root["X"], root["y"])
+        idx = np.random.randint(0, len(root["y"]), steps * self.local_batch_size)
+        model.n_epochs = 1
+        return model.fit(root["X"][idx], root["y"][idx])
 
     def _make_model(self, n_features: int):
         """Instantiate a local model seeded with the current global params."""

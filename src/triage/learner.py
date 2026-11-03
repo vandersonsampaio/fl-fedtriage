@@ -50,7 +50,7 @@ class TriageLearner(AttackedFederatedLearner):
     def _server_update(self, participants, root_data) -> np.ndarray:
         rng_state = np.random.get_state()
         root = root_data or self._carve_root(participants[0])
-        update = self._make_model(participants[0].n_features).fit(root["X"], root["y"])
+        update = self._fit_server(self._make_model(participants[0].n_features), root, participants)
         np.random.set_state(rng_state)
         return update
 
