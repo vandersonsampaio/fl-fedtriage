@@ -7,8 +7,10 @@ modules: src/utils/data_loader.py, src/defense/rl_selector.py, and
 src/fl/gradf_learner.py.
 
 Byzantine clients (by index in byzantine_ids) have their parameter updates
-poisoned after local training. For label_flipping, training labels are
-corrupted before local training (a data-level attack).
+poisoned after local training. For the data-level attacks (label_flipping,
+backdoor_trigger), the training data is corrupted before local training; with
+backdoor_trigger, every round also records the attack success rate of the
+global model on the triggered test images of all participants.
 
 pretense_rounds > 0: clients behave honestly in rounds 1..pretense_rounds and
 then launch attacks from round pretense_rounds+1 onward (TARS pretense attack).
@@ -18,7 +20,9 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from src.classification.attack_simulator import AttackSimulator
+from src.classification.attack_simulator import (
+    DATA_ATTACKS, AttackSimulator, backdoor_success_rate, image_shape,
+)
 from src.fl.federated_learner import FederatedLearner, ParticipantData, RoundResult
 
 
@@ -31,14 +35,38 @@ class AttackedFederatedLearner(FederatedLearner):
         pretense_rounds: int = 0,
         n_classes_data: int = 10,
         seed: int = 42,
+        backdoor_fraction: float = 0.5,
+        target_class: int = 0,
         **kwargs,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, seed=seed, **kwargs)
         self.attack_type = attack_type
         self.byzantine_ids = set(byzantine_ids or [])
         self.pretense_rounds = pretense_rounds
         self.n_classes_data = n_classes_data
+        self.backdoor_fraction = backdoor_fraction
+        self.target_class = target_class
         self._sim = AttackSimulator(seed=seed)
+
+    def _poisoned_data(self, p: ParticipantData) -> Tuple[np.ndarray, np.ndarray]:
+        """Training data of a Byzantine client under a data-level attack."""
+        if self.attack_type == "backdoor_trigger":
+            return self._sim.poison_data(
+                p.X_train, p.y_train, "backdoor_trigger", poison_fraction=self.backdoor_fraction,
+                target_class=self.target_class, input_shape=self.input_shape,
+            )
+        return self._sim.poison_data(
+            p.X_train, p.y_train, self.attack_type, n_classes=self.n_classes_data,
+        )
+
+    def _after_round(self, result: RoundResult, participants: List[ParticipantData]) -> None:
+        if self.attack_type != "backdoor_trigger":
+            return
+        model = self._make_model(participants[0].n_features)
+        X = np.concatenate([p.X_test for p in participants])
+        y = np.concatenate([p.y_test for p in participants])
+        shape = image_shape(participants[0].n_features, self.input_shape)
+        result.attack_success_rate = backdoor_success_rate(model.predict, X, y, shape, self.target_class)
 
     def _is_active(self, round_num: int) -> bool:
         return self.attack_type not in ("none", "") and round_num > self.pretense_rounds
@@ -57,12 +85,8 @@ class AttackedFederatedLearner(FederatedLearner):
             is_byz = (i in self.byzantine_ids) and active
             model = self._make_model(p.n_features)
 
-            if is_byz and self.attack_type == "label_flipping":
-                _, y_p = self._sim.poison_data(
-                    p.X_train, p.y_train, "label_flipping",
-                    n_classes=self.n_classes_data,
-                )
-                delta = model.fit(p.X_train, y_p)
+            if is_byz and self.attack_type in DATA_ATTACKS:
+                delta = model.fit(*self._poisoned_data(p))
             else:
                 delta = model.fit(p.X_train, p.y_train)
                 if is_byz:
@@ -85,7 +109,7 @@ class AttackedFederatedLearner(FederatedLearner):
         agg_kwargs: Dict = {}
         if self.aggregation == "fltrust":
             srv = self._make_model(participants[0].n_features)
-            srv_delta = srv.fit(root_data["X"], root_data["y"])  # type: ignore[index]
+            srv_delta = self._fit_server(srv, root_data, participants)  # type: ignore[arg-type]
             agg_kwargs["server_update"] = srv_delta
         else:
             agg_kwargs["sample_sizes"] = [p.n_train for p in participants]
@@ -120,11 +144,8 @@ class InformedAttackedFederatedLearner(AttackedFederatedLearner):
     `trim_attack`, `krum_collusion`, `low_mag_backdoor`) — introduced to
     recreate headroom for adaptive defenses (severe non-IID + informed attacks).
 
-    Deliberately stronger (worst-case) than `AttackedFederatedLearner` (a
-    blind attacker that doesn't see other clients' updates) — used only for
-    this stress test, and does NOT replace the blind attacker in the already
-    published experiments (exp1/exp2/exp4/exp7), which keep their original
-    behavior.
+    Deliberately stronger (worst-case) than `AttackedFederatedLearner`, whose
+    attacker is blind to other clients' updates.
 
     `server_update` is ALWAYS computed, even when `self.aggregation !=
     'fltrust'` — same reason documented in `GRADFFederatedLearner`/
@@ -141,7 +162,7 @@ class InformedAttackedFederatedLearner(AttackedFederatedLearner):
         active = self._is_active(round_num)
 
         root = root_data or self._carve_root(participants[0])
-        server_delta = self._make_model(participants[0].n_features).fit(root["X"], root["y"])
+        server_delta = self._fit_server(self._make_model(participants[0].n_features), root, participants)
 
         honest_updates: List[np.ndarray] = []
         for p in participants:
@@ -153,13 +174,8 @@ class InformedAttackedFederatedLearner(AttackedFederatedLearner):
         for i, p in enumerate(participants):
             is_byz = (i in self.byzantine_ids) and active
 
-            if is_byz and self.attack_type == "label_flipping":
-                model = self._make_model(p.n_features)
-                _, y_p = self._sim.poison_data(
-                    p.X_train, p.y_train, "label_flipping",
-                    n_classes=self.n_classes_data,
-                )
-                delta = model.fit(p.X_train, y_p)
+            if is_byz and self.attack_type in DATA_ATTACKS:
+                delta = self._make_model(p.n_features).fit(*self._poisoned_data(p))
             elif is_byz:
                 peers = [u for j, u in enumerate(honest_updates) if j != i]
                 delta = self._sim.poison_update(
@@ -214,7 +230,7 @@ def compute_param_updates_auto(
         return learner._compute_param_updates(participants, active)
 
     root = root_data or learner._carve_root(participants[0])
-    server_delta = learner._make_model(participants[0].n_features).fit(root["X"], root["y"])
+    server_delta = learner._fit_server(learner._make_model(participants[0].n_features), root, participants)
 
     honest_updates: List[np.ndarray] = []
     for p in participants:

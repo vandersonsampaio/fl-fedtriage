@@ -1,0 +1,4 @@
+cosserver_only_seed52.csv: 21 vs 21 rows, matched 21, max|Δ| = 0.00e+00, cells with Δ≠0: 0
+sr_bin_seed52.csv: 21 vs 21 rows, matched 21, max|Δ| = 0.00e+00, cells with Δ≠0: 0
+sr_b025_seed53.csv: 21 vs 21 rows, matched 21, max|Δ| = 0.00e+00, cells with Δ≠0: 0
+PARITY PASSED

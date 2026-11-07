@@ -1,0 +1,16 @@
+dataset,model,system,alpha,attack_type,seed,round,accuracy,sec
+mnist,logistic,ceiling_fedavg10,0.05,none,72,1,0.5834,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,2,0.6643,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,3,0.7132,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,4,0.7483000000000001,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,5,0.7731,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,6,0.7901,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,7,0.805,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,8,0.8156000000000001,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,9,0.8262999999999998,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,10,0.8315999999999999,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,11,0.8371999999999999,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,12,0.8428000000000001,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,13,0.8469,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,14,0.8503999999999999,14.091778039932251
+mnist,logistic,ceiling_fedavg10,0.05,none,72,15,0.8532,14.091778039932251

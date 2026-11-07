@@ -1,0 +1,16 @@
+dataset,model,system,alpha,attack_type,seed,round,accuracy,sec
+mnist,logistic,clustering,0.05,sign_flipping,72,1,0.3621,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,2,0.41129999999999994,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,3,0.4349,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,4,0.4492,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,5,0.4591,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,6,0.49849999999999994,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,7,0.5626,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,8,0.5987,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,9,0.6223,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,10,0.6486000000000001,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,11,0.6709000000000002,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,12,0.6912,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,13,0.7098,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,14,0.7265999999999999,42.570823192596436
+mnist,logistic,clustering,0.05,sign_flipping,72,15,0.7409999999999999,42.570823192596436

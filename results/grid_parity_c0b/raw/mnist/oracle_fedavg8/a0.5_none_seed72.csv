@@ -1,0 +1,16 @@
+dataset,model,system,alpha,attack_type,seed,round,accuracy,sec
+mnist,logistic,oracle_fedavg8,0.5,none,72,1,0.732,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,2,0.8135,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,3,0.8469000000000001,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,4,0.8634999999999999,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,5,0.8732999999999999,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,6,0.8795,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,7,0.8836,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,8,0.8873,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,9,0.8895,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,10,0.8919,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,11,0.8941999999999999,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,12,0.8955,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,13,0.897,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,14,0.8976,11.522794246673584
+mnist,logistic,oracle_fedavg8,0.5,none,72,15,0.8984,11.522794246673584

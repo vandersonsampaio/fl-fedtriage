@@ -187,14 +187,14 @@ def build_learner_cls():
 
 
 def run(mode: str, seeds: List[int], alphas: List[float], attack_types: Optional[List[str]],
-        record: bool, n_rounds: int = 15, tag: str = "") -> None:
+        record: bool, n_rounds: int = 15, tag: str = "", out: str = OUT) -> None:
     from src.experiments.exp9_dominance_grid import BLIND_ATTACKS, INFORMED_ATTACKS, _split_name
     from src.utils.data_loader import load_dataset_participants
 
     Learner = build_learner_cls()
     attack_types = attack_types or (INFORMED_ATTACKS + BLIND_ATTACKS)
-    os.makedirs(f"{OUT}/raw", exist_ok=True)
-    os.makedirs(f"{OUT}/detectores", exist_ok=True)
+    os.makedirs(f"{out}/raw", exist_ok=True)
+    os.makedirs(f"{out}/detectores", exist_ok=True)
     for seed in seeds:
         rows = []
         for alpha in alphas:
@@ -215,9 +215,9 @@ def run(mode: str, seeds: List[int], alphas: List[float], attack_types: Optional
                       f"({time.time() - t0:.0f}s)", flush=True)
                 if record:
                     pd.DataFrame(learner.rows).to_csv(
-                        f"{OUT}/detectores/{mode}_{attack}_a{alpha}_seed{seed}.csv", index=False)
+                        f"{out}/detectores/{mode}_{attack}_a{alpha}_seed{seed}.csv", index=False)
         suffix = f"_{tag}" if tag else ""
-        pd.DataFrame(rows).to_csv(f"{OUT}/raw/{mode}_seed{seed}{suffix}.csv", index=False)
+        pd.DataFrame(rows).to_csv(f"{out}/raw/{mode}_seed{seed}{suffix}.csv", index=False)
 
 
 # ---------------------------------------------------------------------------
@@ -229,11 +229,11 @@ DETECTORS = {"S_R": -1, "S_cl": -1, "S_cg": -1, "S_lg": -1,
              "norm": +1, "cos_median": -1, "l2_median": +1, "cos_server": -1}
 
 
-def auc() -> None:
+def auc(out: str = OUT) -> None:
     from sklearn.metrics import roc_auc_score
 
     rows = []
-    for f in sorted(glob.glob(f"{OUT}/detectores/td3_*.csv")):
+    for f in sorted(glob.glob(f"{out}/detectores/td3_*.csv")):
         name = os.path.basename(f)[4:-4]
         attack, rest = name.rsplit("_a", 1)
         alpha = float(rest.split("_seed")[0])
@@ -246,7 +246,7 @@ def auc() -> None:
             rows.append({"attack_type": attack, "alpha": alpha, "detector": det,
                          "auc": roc_auc_score(y, x) if ok else np.nan})
     df = pd.DataFrame(rows)
-    df.to_csv(f"{OUT}/passo1_auc_detectores.csv", index=False)
+    df.to_csv(f"{out}/passo1_auc_detectores.csv", index=False)
     piv = df.pivot_table(index=["attack_type", "alpha"], columns="detector", values="auc")
     piv = piv[list(DETECTORS)]
     pd.set_option("display.width", 200)
@@ -329,15 +329,15 @@ def _headroom_count(sys_df: pd.DataFrame, fixed_raw: pd.DataFrame) -> int:
     return int(((m.mean_sys - m.mean_fix) > (m.std_sys + m.std_fix)).sum())
 
 
-def analyze() -> None:
-    raw = pd.concat([pd.read_csv(f) for f in sorted(glob.glob(f"{OUT}/raw/*_seed*.csv"))
+def analyze(out: str = OUT) -> None:
+    raw = pd.concat([pd.read_csv(f) for f in sorted(glob.glob(f"{out}/raw/*_seed*.csv"))
                      if "_smoke" not in f])
     raw = raw[raw["mode"] != "td3"]
     ref = _load_reference()
     rnd = _load_random()
     fixed_raw = pd.read_csv("results/tables/exp9_dominance_grid_10seeds_ALL_root100_raw.csv")
     allsys = pd.concat([ref, rnd, raw[["alpha", "attack_type", "seed", "accuracy", "mode"]]])
-    allsys.to_csv(f"{OUT}/grade_combined_raw.csv", index=False)
+    allsys.to_csv(f"{out}/grade_combined_raw.csv", index=False)
 
     lines = []
     summ = allsys.groupby("mode")["accuracy"].mean()
@@ -384,21 +384,22 @@ def analyze() -> None:
 
     pooled = pd.DataFrame(pooled_rows)
     per_attack = pd.DataFrame(per_attack_rows)
-    pooled.to_csv(f"{OUT}/grade_pooled.csv", index=False)
-    per_attack.to_csv(f"{OUT}/grade_por_ataque.csv", index=False)
+    pooled.to_csv(f"{out}/grade_pooled.csv", index=False)
+    per_attack.to_csv(f"{out}/grade_por_ataque.csv", index=False)
     pd.set_option("display.width", 220)
     lines.append("\n=== pooled (mean per seed over the 21 cells; TOST ±0.01 + Wilcoxon) ===\n" +
                  pooled.round(4).to_string(index=False))
     lines.append("\n=== per attack (mean per seed over 3 alphas; Holm over 7) ===\n" +
                  per_attack.round(4).to_string(index=False))
     text = "\n".join(lines)
-    with open(f"{OUT}/grade_analise.txt", "w") as fh:
+    with open(f"{out}/grade_analise.txt", "w") as fh:
         fh.write(text)
     print(text)
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--out", default=OUT, help="experiment folder")
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
     r.add_argument("--mode", choices=MODES, required=True)
@@ -412,8 +413,8 @@ if __name__ == "__main__":
     sub.add_parser("analyze")
     args = ap.parse_args()
     if args.cmd == "run":
-        run(args.mode, args.seeds, args.alphas, args.attack_types, args.record, args.n_rounds, args.tag)
+        run(args.mode, args.seeds, args.alphas, args.attack_types, args.record, args.n_rounds, args.tag, args.out)
     elif args.cmd == "auc":
-        auc()
+        auc(args.out)
     else:
-        analyze()
+        analyze(args.out)

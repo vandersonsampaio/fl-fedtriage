@@ -1,0 +1,16 @@
+dataset,model,system,alpha,attack_type,seed,round,accuracy,sec
+mnist,logistic,median,0.1,krum_collusion,72,1,0.3009,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,2,0.3258,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,3,0.348,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,4,0.3597,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,5,0.37229999999999996,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,6,0.3793000000000001,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,7,0.3921,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,8,0.3971,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,9,0.4003,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,10,0.4003,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,11,0.4062,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,12,0.4069,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,13,0.4121,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,14,0.4149,52.59749484062195
+mnist,logistic,median,0.1,krum_collusion,72,15,0.42079999999999995,52.59749484062195

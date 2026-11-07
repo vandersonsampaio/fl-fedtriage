@@ -1,0 +1,14 @@
+fedavg         max|Δ| = 0.000000  OK
+fltrust        max|Δ| = 0.000000  OK
+median         max|Δ| = 0.000000  OK
+trimmed_mean   max|Δ| = 0.000000  OK
+krum           max|Δ| = 0.000000  OK
+clustering     max|Δ| = 0.000000  OK
+random         max|Δ| = 0.000000  OK
+oracle         max|Δ| = 0.000000  OK
+gradf          max|Δ| = 0.000000  OK
+fedstrategist  max|Δ| = 0.000000  OK
+adaaggrl       max|Δ| = 0.000000  OK
+tars           max|Δ| = 0.000000  OK
+adabfl         max|Δ| = 0.000000  OK
+DETERMINISM PASSED (3 runs compared against fwd.json#0)

@@ -24,6 +24,12 @@ USENIX Security 2020):
                       update's own norm, instead of a loud multiplicative
                       spike.
 
+Plus a trigger backdoor (BadNets, Gu et al., 2017) at the data level:
+  - backdoor_trigger: a fraction of the attacker's training images get a
+                      fixed checkerboard patch in the bottom-right corner and
+                      the target label; its success is measured by
+                      `backdoor_success_rate` on triggered test images.
+
 These attacks require additional context:
   - reference   = server root gradient for the current round
   - peer_updates = other clients' honest updates for the current round
@@ -98,9 +104,46 @@ _UPDATE_ATTACKS: frozenset = frozenset({
 # Attacks that operate on training data (before local training)
 _DATA_ATTACKS: frozenset = frozenset({
     'label_flipping',     # TARS: c → (c + 1) mod K
+    'backdoor_trigger',   # BadNets: corner patch + target label
 })
 
 ALL_ATTACKS: frozenset = _UPDATE_ATTACKS | _DATA_ATTACKS
+DATA_ATTACKS: frozenset = _DATA_ATTACKS
+
+TRIGGER_SIZE = 4
+
+
+def image_shape(n_features: int, input_shape: Optional[Tuple[int, int, int]] = None) -> Tuple[int, int, int]:
+    """(H, W, C) of a flattened image; square grayscale when `input_shape` is not given."""
+    if input_shape is not None:
+        if int(np.prod(input_shape)) != n_features:
+            raise ValueError(f"input_shape {input_shape} does not match {n_features} features")
+        return tuple(input_shape)
+    side = int(round(np.sqrt(n_features)))
+    if side * side != n_features:
+        raise ValueError(f"cannot infer an image shape from {n_features} features")
+    return side, side, 1
+
+
+def apply_trigger(X: np.ndarray, input_shape: Tuple[int, int, int], size: int = TRIGGER_SIZE) -> np.ndarray:
+    """Copy of the flattened (H, W, C) images `X` with a `size` × `size` checkerboard of 0 and 1 in
+    the bottom-right corner, one pixel from the border, on every channel."""
+    H, W, C = input_shape
+    out = X.reshape(len(X), H, W, C).copy()
+    r0, c0 = H - 1 - size, W - 1 - size
+    pattern = (np.add.outer(np.arange(size), np.arange(size)) % 2 == 0).astype(out.dtype)
+    out[:, r0:r0 + size, c0:c0 + size, :] = pattern[None, :, :, None]
+    return out.reshape(X.shape)
+
+
+def backdoor_success_rate(predict, X: np.ndarray, y: np.ndarray, input_shape: Tuple[int, int, int],
+                          target_class: int = 0) -> float:
+    """Fraction of the test images whose label is not `target_class` that `predict` assigns to
+    `target_class` once the trigger is applied."""
+    keep = y != target_class
+    if not keep.any():
+        return float("nan")
+    return float(np.mean(predict(apply_trigger(X[keep], input_shape)) == target_class))
 
 
 class AttackSimulator:
@@ -205,6 +248,8 @@ class AttackSimulator:
         attack_type: str,
         n_classes: int = 10,
         poison_fraction: float = 1.0,
+        target_class: int = 0,
+        input_shape: Optional[Tuple[int, int, int]] = None,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Apply a data-level poisoning attack to training samples.
@@ -214,23 +259,31 @@ class AttackSimulator:
         X : ndarray (N, features)
         y : ndarray (N,) int labels
         attack_type : str
-            Currently only 'label_flipping'.
+            'label_flipping' or 'backdoor_trigger'.
         n_classes : int
             Total number of classes K (used for label cycling).
         poison_fraction : float
             Fraction of samples to corrupt (0–1).
+        target_class : int
+            Label given to the triggered samples ('backdoor_trigger').
+        input_shape : (H, W, C) | None
+            Image shape of the flattened samples ('backdoor_trigger'); square
+            grayscale when None.
 
         Returns
         -------
         X_poisoned, y_poisoned (copies; original arrays are not modified)
         """
         name = attack_type.lower()
-        if name != 'label_flipping':
+        if name not in _DATA_ATTACKS:
             if name in _UPDATE_ATTACKS:
                 raise ValueError(
                     f"'{name}' is a gradient-level attack. Use poison_update() instead."
                 )
             raise ValueError(f"Unknown data attack: {name!r}")
+        if name == 'backdoor_trigger':
+            return self._backdoor_trigger(X, y, poison_fraction, target_class,
+                                          image_shape(X.reshape(len(X), -1).shape[1], input_shape))
         return self._label_flipping(X, y, n_classes=n_classes, poison_fraction=poison_fraction)
 
     # ------------------------------------------------------------------
@@ -433,6 +486,23 @@ class AttackSimulator:
         idx = self._rng.choice(len(y), n_poison, replace=False)
         y_out[idx] = (y[idx] + 1) % n_classes
         return X, y_out
+
+    def _backdoor_trigger(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        poison_fraction: float,
+        target_class: int,
+        input_shape: Tuple[int, int, int],
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Applies the trigger to a random `poison_fraction` of the samples and relabels them
+        `target_class`; the other samples are left clean."""
+        X_out, y_out = X.copy(), y.copy()
+        n_poison = max(1, int(len(y) * poison_fraction))
+        idx = self._rng.choice(len(y), n_poison, replace=False)
+        X_out[idx] = apply_trigger(X[idx], input_shape)
+        y_out[idx] = target_class
+        return X_out, y_out
 
 
 # ---------------------------------------------------------------------------

@@ -15,9 +15,8 @@ datasets:
   cifar10:
     raw_dir: data/raw/cifar10
     processed_dir: data/processed/cifar10
-  mimic:
-    raw_dir: data/raw/mimic
-    processed_dir: data/processed
+  bloodmnist:
+    raw_dir: data/raw/medmnist
 
 gradf:
   detection:

@@ -101,9 +101,10 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--val_fraction", type=float, default=0.1)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--output_dir", default="results/models")
     args = parser.parse_args()
 
     pretrain(
         dataset=args.dataset, feature_dim=args.feature_dim, epochs=args.epochs,
-        batch_size=args.batch_size, val_fraction=args.val_fraction, seed=args.seed,
+        batch_size=args.batch_size, val_fraction=args.val_fraction, seed=args.seed, output_dir=args.output_dir,
     )

@@ -1,6 +1,8 @@
-# GRADF — architecture and implementation notes
+# Framework — architecture and implementation notes
 
 Back to the [main README](../README.md).
+
+This is the FL framework inherited from fl-gradf. In this repository it provides the **baselines** for TRIAGE (classical rules, GRADF v1, TARS, AdaBFL, FedStrategist, AdaAggRL). The TRIAGE module is `triage/`.
 
 - [Pipeline](#pipeline)
 - [Modules](#modules)
@@ -12,7 +14,7 @@ Back to the [main README](../README.md).
 
 ---
 
-## Pipeline
+## Pipeline (GRADF v1 baseline)
 
 ```
 GRADFFederatedLearner._run_round(), per client:
@@ -40,6 +42,12 @@ Exercised end to end by `tests/test_integration.py` (and by `notebooks/05_attack
 - `federated_learner.py` — `FederatedLearner`, the training loop. `_LogisticModel` (default) keeps all parameters as one flat vector `[W_flat, b]`, so every aggregation rule works on a 1-D array. `_CNNModel` (`model_type='cnn'`, `input_shape=(H, W, C)`) is a small Keras CNN with the **same** flat-vector interface, so nothing downstream changes; `_make_model` is the only dispatch point. Built-in rules: `FedAvgStrategy`, `FLTrustStrategy`.
 - `attacked_learner.py` — `AttackedFederatedLearner` injects attacks every round (gradient level via `poison_update`, data level via `poison_data`). Also hosts the informed-attacker path and `RotatingAttackedFederatedLearner` (the attack type cycles every round).
 - `gradf_learner.py` — `GRADFFederatedLearner`, which runs the full pipeline above.
+
+### TRIAGE (`triage/`)
+
+- `signals.py` — per-client signals, all oriented so that lower is more suspicious: `inversion` (S_R, gradient inversion on the logistic model), `server_cosine` (cosine to the update trained on the root dataset), and the signals that need neither inversion nor root: `median_cosine` (cosine to the coordinate-wise median of the round), `neg_norm`, `neg_median_distance` (negative L2 distance to that median) and `temporal_cosine` (cosine to the client's own previous update).
+- `rule.py` — `TriageRule.decide`: min-max normalization per signal, threshold `b · max` or median − k·MAD, combination of the signals into a binary mask (`any`, `all`, `confidence`: the signal with the largest gap in the round, `min_rank`: each client's lowest rank), weighting of the included clients (`uniform`, `soft`, `samples`) and the misbehavior counter `h` with penalty `lam ** h` (`lam = 1` disables it). Returns a `Decision`, whose `records()` gives one row per client: signals, thresholds, flags, weight, `h` and the reason for the decision.
+- `learner.py` — `TriageLearner`, an `AttackedFederatedLearner` that aggregates the clients' full parameters with the rule's weights and keeps the per-client log in `log` (with `is_byz` and any extra signal listed in `observe`).
 
 ### Attacks (`classification/`)
 
@@ -77,7 +85,7 @@ Exercised end to end by `tests/test_integration.py` (and by `notebooks/05_attack
 ### Utilities (`utils/`)
 
 - `data_loader.py` — `load_dataset_participants()` (with `root_size`/`root_seed` to subsample the FLTrust root) and generators of real training data for the classifier, combiner and selector (`generate_detection_dataset`, `generate_selector_experiences`, `generate_rotating_selector_experiences`).
-- `stats.py` (`run_over_seeds`, `summarize`, `paired_significance`), `metrics.py`, `config_loader.py`, `logger.py`, `visualization.py`, `hospital_splitter.py` (MIMIC-III partitions, blocked on data access).
+- `stats.py` (`run_over_seeds`, `summarize`, `paired_significance`), `metrics.py`, `config_loader.py`, `logger.py`; `visualization.py` is used by `exp1`/`exp4` only.
 
 ---
 
@@ -88,18 +96,13 @@ All in `experiments/`, run as modules (`python -m src.experiments.<name>`).
 | experiment | purpose | main options |
 |---|---|---|
 | `exp1_baseline` | system comparison + per-component ablation (FedAvg, FLTrust, Median, Trimmed-Mean, RL-only, Hardening-only, Random/Oracle selector, GRADF); reports wall-clock cost | `--seeds`, `--attack_types`, `--root_size`, `--ground_truth_oracle` |
-| `exp1_cnn_scale` | classical defenses on a small CNN (MNIST, CIFAR-10) | `--seeds` |
-| `exp2_robustness` | robustness per attack and Byzantine fraction; retention vs. FedAvg and vs. the best fixed rule | `--seeds` |
-| `exp3_scalability` | scaling with the number of clients | — |
 | `exp4_adaptive` | adaptive attacker (rotating attacks): GRADF vs. static defenses vs. TARS, AdaBFL, FedStrategist | `--seeds`, `--root_size` |
-| `exp5_clinical` | export/analysis tooling for a clinical survey (no data is fabricated) | — |
-| `exp6_fairness` | fairness across clients | — |
-| `exp7_modality_ablation` | multi-modal vs. single-modality detection | `--seeds` |
-| `exp8_xai_examples` | qualitative XAI examples from `exp2`'s audit trails | — |
 | `exp9_dominance_grid` | fixed-rule dominance across attack × α; root-size sensitivity | `--seeds`, `--root_size`, `--strategies` |
 | `exp10_selector_comparison` | GRADF vs. FedStrategist vs. AdaAggRL vs. Random/Oracle (root = 100) | `--variant a\|b`, `--adaaggrl_feature_extractor` |
 
 `--root_size N` adds `_root{N}` to the output names, so a sensitivity run never overwrites the canonical results.
+
+These are the experiments the baselines need (`exp10` imports from `exp1` and `exp9`; `exp4` hosts the rotating-attack setup of TARS, AdaBFL and FedStrategist). GRADF v1's other experiments (CNN scale, robustness, scalability, clinical survey, fairness, modality ablation, XAI examples) and the MIMIC-III tooling stay in [fl-gradf](https://github.com/vandersonsampaio/fl-gradf/tree/experiments-2.0.0/src/experiments).
 
 ---
 
@@ -109,8 +112,6 @@ All in `experiments/`, run as modules (`python -m src.experiments.<name>`).
 - **`FedProxStrategy` is an approximation.** Real FedProx changes the *local* objective, which an aggregation-only interface cannot see; here it is a damped weighted mean at the server.
 - **DP noise depends on dimensionality.** Layer 2 adds Laplace noise per coordinate, so its L2 norm grows with `sqrt(n_parameters)`. The default `dp_epsilon=50.0` is calibrated for MNIST-scale models (~7,850 parameters); other model sizes need a rescaled epsilon.
 - **The Gaussian DP mechanism is opt-in.** `GaussianDPMechanism` (L2 clip, Gaussian noise added once to the aggregate, RDP accounting, tight sensitivity for mean-type rules and a conservative bound for the robust ones) only applies when passed as `HardeningPipeline(dp_mechanism=...)`; the default keeps the Laplace mechanism, so reported numbers do not change. It protects whoever sees the released global model, not against the server itself.
-- **Modality ablation masks inputs.** "Single-modality" classifiers zero the other 3 inputs instead of retraining a smaller network, which keeps the architecture fixed.
-- **CNN scale is clean on MNIST, ambiguous on CIFAR-10.** On MNIST all three defenses beat FedAvg by a wide margin (Cohen's d ≈ 9); on CIFAR-10 none is distinguishable from FedAvg at the reduced scale used (15 rounds, 3 seeds). Not resolved; needs a longer run before citing CIFAR-10 numbers.
 - **The FLTrust root size decides the headline result.** The default root is 3,000 MNIST samples, 30× the ~100 of the original FLTrust paper. With `--root_size 100`, FLTrust's win rate falls from 18/21 to 8/21 cells. A large root also means centralizing raw client data, an open privacy question.
 - **The `exp1` Oracle selector is gated by the real classifier,** so it is not an upper bound on weakly detected attacks (`sign_flipping`, `label_flipping`). The decoupled oracle (`--ground_truth_oracle`, also used by `exp10`) bypasses the classifier with the true attack index.
 
@@ -121,9 +122,9 @@ All in `experiments/`, run as modules (`python -m src.experiments.<name>`).
 - **Two frameworks.** TensorFlow/Keras for the neural models (classifier, selector, combiner, CNN); NumPy for the logistic FL model.
 - **Safe imports.** Every module can be imported without side effects; training and demo code sits behind `if __name__ == '__main__':`.
 - **Import cycles.** `fl/` needs `detection/`, and `utils/data_loader.py` needs `fl/`; check both directions before moving a cross-cutting helper.
-- **Isolate the audit trail per run.** `XAIExplainer()`/`AuditTrail()` default to one shared file; scripts that loop over runs and read the trail must pass a per-run `AuditTrail(path=...)`, cleared before training (as `exp2_robustness.py` does).
+- **Isolate the audit trail per run.** `XAIExplainer()`/`AuditTrail()` default to one shared file; scripts that loop over runs and read the trail must pass a per-run `AuditTrail(path=...)`, cleared before training.
 - **`HardeningPipeline` always needs `server_update`.** The selector can vote for FLTrust in any round, regardless of the learner's own `aggregation`, so `GRADFFederatedLearner` computes the server update every round.
-- **Seeds and reproducibility.** A learner's `seed` does not seed the global `np.random`, so results can depend on execution order; GRADF's DQN is also non-deterministic across runs (see [`results/d2_variancia_p1/`](https://github.com/vandersonsampaio/fl-gradf/tree/experiments-2.0.0/results/d2_variancia_p1) in fl-gradf).
+- **Seeds and reproducibility.** A learner built with `seed=` calls `seed_everything(seed)` (Python, NumPy, TensorFlow/Keras) in `FederatedLearner.__init__`, so each system starts from the same RNG state whatever ran before it in the process. GRADF v1's DQN state no longer uses the measured round time: `RLDefenseSelector.LATENCY_FEATURE` defaults to `"constant"` (latency feature = 0.0, state still 5-dimensional); `FEDTRIAGE_GRADF_LATENCY=wallclock` restores the published, non-deterministic behavior. `python -m scripts.determinism_check` checks the criterion (|Δ| = 0 across repeated runs, in the same process and in reverse order) for all 13 baseline systems. In fl-gradf, results depended on execution order and GRADF's DQN varied up to 63 p.p. per cell (see [`results/d2_variancia_p1/`](https://github.com/vandersonsampaio/fl-gradf/tree/experiments-2.0.0/results/d2_variancia_p1)).
 
 ---
 
@@ -135,17 +136,18 @@ data/
   processed/  mnist/, cifar10/   (iid/, non_iid/, non_iid_a{α}/  →  server_val/, client_0/ … client_9/)
 ```
 
-`server_val/` is the FLTrust root (5% of the training pool). Non-IID heterogeneity (Dirichlet α = 0.5): MNIST ≈ 0.65, CIFAR-10 ≈ 0.67. MIMIC-III (`data/download_mimic.py`) requires credentialed PhysioNet access.
+`server_val/` is the FLTrust root (5% of the training pool). Non-IID heterogeneity (Dirichlet α = 0.5): MNIST ≈ 0.65, CIFAR-10 ≈ 0.67.
 
 ---
 
 ## Tests
 
 ```bash
-pytest                              # all 95 tests
+pytest                              # all 121 tests
 pytest src/detection/tests/         # detection modalities + combiner
 pytest src/classification/tests/    # attack classifier
 pytest src/defense/tests/           # aggregation rules + defense selector
+pytest src/triage/tests/            # TRIAGE signals, rule and learner
 pytest tests/test_integration.py    # full GRADF pipeline and audit trail
 pytest tests/test_utils.py          # config, metrics, logging, plotting
 ```

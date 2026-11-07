@@ -115,8 +115,60 @@ class ClusteringStrategy(AggregationStrategy):
         )
 
 
+class NormClipStrategy(AggregationStrategy):
+    """Scales every update whose L2 norm exceeds the median norm of the round down to that
+    median, then takes the uniform mean (norm bounding, as in Sun et al., 2019, without noise)."""
+
+    def aggregate(self, updates: List[np.ndarray], **kwargs) -> Tuple[np.ndarray, Dict]:
+        stacked = np.stack(updates, axis=0)
+        norms = np.linalg.norm(stacked, axis=1)
+        bound = float(np.median(norms))
+        scale = np.minimum(1.0, bound / np.maximum(norms, 1e-12))
+        return (stacked * scale[:, None]).mean(axis=0), {"bound": bound, "n_clipped": int((scale < 1).sum())}
+
+
+class FlameStrategy(AggregationStrategy):
+    """FLAME (Nguyen et al., 2022): HDBSCAN over the pairwise cosine distances of the updates
+    (minimum cluster size n/2 + 1), keeping the majority cluster; the admitted updates are clipped
+    to the median norm of all updates and averaged, and Gaussian noise with standard deviation
+    `lam` times that median is added. If HDBSCAN finds no cluster, every update is admitted."""
+
+    def __init__(self, lam: float = 0.001, seed: Optional[int] = None) -> None:
+        self.lam = lam
+        self._rng = np.random.default_rng(seed)
+
+    def aggregate(self, updates: List[np.ndarray], **kwargs) -> Tuple[np.ndarray, Dict]:
+        from sklearn.cluster import HDBSCAN
+
+        stacked = np.stack(updates, axis=0)
+        n = len(stacked)
+        norms = np.linalg.norm(stacked, axis=1)
+        unit = stacked / np.maximum(norms, 1e-12)[:, None]
+        distance = np.clip(1.0 - unit @ unit.T, 0.0, 2.0)
+        labels = HDBSCAN(min_cluster_size=n // 2 + 1, min_samples=1, allow_single_cluster=True,
+                         metric="precomputed", copy=True).fit_predict(distance)
+        clustered = labels[labels >= 0]
+        admitted = labels == np.bincount(clustered).argmax() if len(clustered) else np.ones(n, dtype=bool)
+        bound = float(np.median(norms))
+        scale = np.minimum(1.0, bound / np.maximum(norms[admitted], 1e-12))
+        delta = (stacked[admitted] * scale[:, None]).mean(axis=0)
+        if self.lam > 0:
+            delta = delta + self._rng.normal(0.0, self.lam * bound, size=delta.shape)
+        return delta, {"admitted": admitted.tolist(), "bound": bound}
+
+
+class FlameNoNoiseStrategy(FlameStrategy):
+    """FLAME without the noise step."""
+
+    def __init__(self, seed: Optional[int] = None) -> None:
+        super().__init__(lam=0.0, seed=seed)
+
+
 register_strategy("median", MedianStrategy)
 register_strategy("trimmed_mean", TrimmedMeanStrategy)
 register_strategy("fedprox", FedProxStrategy)
 register_strategy("krum", KrumStrategy)
 register_strategy("clustering", ClusteringStrategy)
+register_strategy("norm_clip", NormClipStrategy)
+register_strategy("flame", FlameStrategy)
+register_strategy("flame_nonoise", FlameNoNoiseStrategy)

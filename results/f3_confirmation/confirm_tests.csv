@@ -1,0 +1,7 @@
+family,hypothesis,candidate,reference,n_seeds,diff_pp,seeds_positive,p_one_sided,p_holm,significant
+primary,H1,tri_all,cos_bin,10,3.362379723027583,10,0.0009765625,0.0029296875,True
+primary,H2,tri_all,fltrust,10,2.7438974270621053,9,0.001953125,0.0029296875,True
+primary,H3,tri_all,flame,10,6.888553284392509,10,0.0009765625,0.0029296875,True
+secondary @r20,H1',tri_all@r20,cos_bin@r20,10,5.731652798304391,10,0.0009765625,0.0029296875,True
+secondary @r20,H2',tri_all@r20,fltrust@r20,10,2.0660198652736375,8,0.009765625,0.009765625,True
+secondary @r20,H3',tri_all@r20,flame,10,4.569574670654437,10,0.0009765625,0.0029296875,True

@@ -1,0 +1,7 @@
+3e53f53cfcebe646042b0bbe777f62aecbf7e7e4492b4d96d549ad870d8d64dd  results/f3_confirmation/PREREGISTRATION.md  # frozen 2026-10-19 09:06:20 -0300, before any run on seeds 62-71
+b7f512b5397c1f35293d647c8c4ebffc061bcb72a661c7e85b260debb57eaf88  src/triage/signals.py  # code at freeze
+5a7f9a19abbb07bdcefebe74b92c04e5160a503ac9743497fac0574b1b4c070b  src/triage/rule.py  # code at freeze
+e8d664a017d309f8ded55f08ac28e153c7e115bbfc57da9796c380d1edec28c2  src/triage/learner.py  # code at freeze
+28daa9df5a96887b0fa0dd3be3334a24b6e255758a14300f23f3412f5856701d  scripts/triage_grid.py  # code at freeze
+8c9710710e1dfd93f265e430086a2b9b34befb4244a8109cd47816371024295a  scripts/triage_compare.py  # code at freeze
+cbe1060f069d2b82a98246e1d29bbfd3f8c39ad58bc6e30d4116ddb7b158b5e5  scripts/launch_grid.sh  # code at freeze
