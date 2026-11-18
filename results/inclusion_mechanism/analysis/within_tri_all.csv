@@ -1,0 +1,13 @@
+dataset,H,flag,is_byz,n_flagged,share_included_by_tri_all
+bloodmnist,250,server_cosine_flag,False,92686,0.8520596422329154
+bloodmnist,250,server_cosine_flag,True,32427,0.31082122922256145
+bloodmnist,250,inversion_flag,False,29232,0.5309250136836344
+bloodmnist,250,inversion_flag,True,31695,0.29490455907871904
+bloodmnist,300,server_cosine_flag,False,111426,0.8521888966668462
+bloodmnist,300,server_cosine_flag,True,38647,0.31316790436515124
+bloodmnist,300,inversion_flag,False,34785,0.5265200517464425
+bloodmnist,300,inversion_flag,True,37987,0.3012346329007292
+mnist,150,server_cosine_flag,False,51203,0.7956174442903736
+mnist,150,server_cosine_flag,True,21134,0.2885397936973597
+mnist,150,inversion_flag,False,23929,0.5626645492916544
+mnist,150,inversion_flag,True,19529,0.230068103845563
