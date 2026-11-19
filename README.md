@@ -135,6 +135,7 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `scripts/inclusion_diag.py`, `scripts/analyze_inclusion_mechanism.py`, `results/inclusion_mechanism/` | Inclusion log and mechanism of `tri_all` (B1): FN/FP rates, norm ratio, and the decomposition of the gain under the rule in `PLAN.md` | new |
 | `results/horizon500/` | Late collapse up to 500 rounds on BloodMNIST (D1): `tri_all`, `cos_bin` and the no-attack ceiling. `PLAN.md` was written before the runs; the result is in `RESULT.md` | new |
 | `results/tri_all_step_parity/` | `tri_all`, `cos_bin` and `cosserver_only` under FLTrust step parity (root 100, seeds 72–76). `PLAN.md` was written before the runs; `RESULT.md`: not at risk on either side | new |
+| `results/tri_all_root20/` | The same three systems at root 20, native and under step parity (seeds 72–76). `PLAN.md` was written before the runs; paused at 28/1,140 jobs so that D2 runs first, resumes after it (`AMENDMENT.md`) | new |
 | `results/tri_all_sc/` | Block D2: `tri_all` with a cap only on included norms above 3 × their median (seeds 72–76). `PLAN.md` was written before the runs; running on the VMs since 2026-11-19 | new |
 | `tests/`, `src/**/tests/` | 148 unit and integration tests | new determinism and TRIAGE tests |
 
