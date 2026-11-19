@@ -27,7 +27,7 @@ All results below are pre-registered and documented in [fl-gradf `results/`](htt
 
 | Finding | Source in fl-gradf |
 |---|---|
-| Discrete rule selection (GRADF's DQN, FedStrategist) does not beat random selection; continuous per-client weighting (AdaAggRL) captures most of the headroom | tag [`p1.0.0`](https://github.com/vandersonsampaio/fl-gradf/tree/p1.0.0) (paper P1) |
+| Discrete rule selection (GRADF's DQN, FedStrategist) does not beat random selection; continuous per-client weighting (AdaAggRL) captures most of the headroom (MNIST, first version of P1; the revised P1, with CIFAR-10 and FLTrust step parity, is being rewritten and does not keep this reading as stated) | tag [`p1.0.0`](https://github.com/vandersonsampaio/fl-gradf/tree/p1.0.0) (paper P1) |
 | Removing AdaAggRL's TD3 does not hurt, and slightly improves accuracy; S_R alone is as good as the full signal set | `results/frente1_ablacao_adaaggrl/` |
 | In the official AdaAggRL code, TD3 is equivalent to a fixed action, on MNIST and on BloodMNIST; the policy does not move from its initialization | `results/b21_replicacao_oficial/`, `results/b31_medmnist_oficial/` |
 | No TD3 configuration (steelman) beats the fixed action | `results/b23_steelman_oficial/`, `results/b23b_steelman_normalizado/` |
@@ -52,7 +52,7 @@ Same setting as below, on seeds 62–71, which were never used in development. T
 
 With a 20-sample root, `tri_all` still beats the best single signal on that root (+5.73), FLTrust (+2.07) and FLAME (+4.57) on BloodMNIST, all significant after Holm. The limitations below were seen again on the confirmation seeds.
 
-**Caveat on FLTrust.** The confirmation used FLTrust with the server update trained by epochs, not with the clients' number of steps. A screen on seeds 72–76 reran FLTrust with step parity ([`results/fltrust_parity/RESULT.md`](results/fltrust_parity/RESULT.md)). By its frozen rule, the claims against FLTrust are not at risk on BloodMNIST at either root. The screen is one-sided, though: `tri_all` and the cosine signals also read the server update's direction, and they have not been measured under parity.
+**Caveat on FLTrust.** The confirmation used FLTrust with the server update trained by epochs, not with the clients' number of steps. A screen on seeds 72–76 reran FLTrust with step parity ([`results/fltrust_parity/RESULT.md`](results/fltrust_parity/RESULT.md)). By its frozen rule, the claims against FLTrust are not at risk on BloodMNIST at either root. The screen is one-sided, though: `tri_all` and the cosine signals also read the server update's direction. Measured under parity on seeds 72–76 at root 100 ([`results/tri_all_step_parity/RESULT.md`](results/tri_all_step_parity/RESULT.md)), neither side is at risk by the plan's rule: `tri_all` barely moves (−0.02 p.p. on BloodMNIST at H = 250), the cosine-only systems lose about 1.6 p.p., and `tri_all`'s margin over the best single signal goes from +2.76 to +4.31 p.p. (CI95 +2.64 to +5.98); on MNIST, `tri_all@par` − `cos_bin@par` = +1.41 (CI90 +0.38 to +2.45). Root 20, native and under parity, is under way ([`results/tri_all_root20/PLAN.md`](results/tri_all_root20/PLAN.md)). Both plans were written before their runs.
 
 ---
 
@@ -134,7 +134,7 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `results/fltrust_parity/` | FLTrust with step parity (`server_steps`) on seeds 72–76: a screen of the confirmation's claims against FLTrust (`ADDENDUM.md`, `RESULT.md`) | new |
 | `scripts/inclusion_diag.py`, `scripts/analyze_inclusion_mechanism.py`, `results/inclusion_mechanism/` | Inclusion log and mechanism of `tri_all` (B1): FN/FP rates, norm ratio, and the decomposition of the gain under the rule in `PLAN.md` | new |
 | `results/horizon500/` | Late collapse up to 500 rounds on BloodMNIST (D1): `tri_all`, `cos_bin` and the no-attack ceiling. `PLAN.md` was written before the runs; the result is in `RESULT.md` | new |
-| `results/tri_all_step_parity/` | `tri_all`, `cos_bin` and `cosserver_only` under FLTrust step parity (root 100, seeds 72–76). `PLAN.md` was written before the runs; the runs are in progress | new |
+| `results/tri_all_step_parity/` | `tri_all`, `cos_bin` and `cosserver_only` under FLTrust step parity (root 100, seeds 72–76). `PLAN.md` was written before the runs; `RESULT.md`: not at risk on either side | new |
 | `results/tri_all_sc/` | Block D2: `tri_all` with a cap only on included norms above 3 × their median (seeds 72–76). `PLAN.md` was written before the runs; running on the VMs since 2026-11-19 | new |
 | `tests/`, `src/**/tests/` | 148 unit and integration tests | new determinism and TRIAGE tests |
 

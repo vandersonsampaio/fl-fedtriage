@@ -1,0 +1,2 @@
+H1 (BloodMNIST, H=250): contrast 2 = +4.31 [+2.64; +5.98] (best@par cos_bin), contrast 3 = +2.76 (best@nat cos_bin) -> not at risk
+H4 (MNIST, H=150): tri_all@par - cos_bin@par = +1.41, CI90 [+0.38; +2.45] -> not at risk
