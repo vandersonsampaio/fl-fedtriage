@@ -12,6 +12,23 @@ from src.triage.signals import (
 )
 
 
+def cap_included_norms(updates: List[np.ndarray], included: np.ndarray, k: float):
+    """Scales down each included update whose norm exceeds k times the median norm of the included
+    updates. Returns the updates (unscaled ones are the same objects) and the scale factors."""
+    norms = np.array([np.linalg.norm(u) for u in updates])
+    idx = np.flatnonzero(included)
+    scales = np.ones(len(updates))
+    if len(idx) == 0:
+        return list(updates), scales
+    bound = k * float(np.median(norms[idx]))
+    out = list(updates)
+    for i in idx:
+        if norms[i] > bound:
+            scales[i] = bound / norms[i]
+            out[i] = updates[i] * scales[i]
+    return out, scales
+
+
 class TriageLearner(AttackedFederatedLearner):
     """Aggregates the clients' full parameters (global + update) with the weights of a
     `TriageRule`. `log` holds one record per client and round (`Decision.records`, plus
@@ -21,13 +38,18 @@ class TriageLearner(AttackedFederatedLearner):
     the updates of the included clients are aggregated by that rule instead of by the weighted
     mean; if the rule includes no client, every client goes to the second stage.
 
+    With `norm_cap` (a factor k), the update of every included client whose L2 norm exceeds k
+    times the median norm of the included clients in the round is scaled down to that bound before
+    the weighted mean; nothing else changes, and rounds without such a client are bit-identical to
+    the run without `norm_cap`. The log then has a `cap_scale` column (1.0 when not scaled).
+
     The server update used by `server_cosine` is trained on the root dataset with the global
     NumPy RNG state saved and restored, so computing it does not change the clients' training.
     """
 
     def __init__(self, *args, rule: TriageRule, num_images: int = 16, max_iters: int = 30,
                  record: bool = True, observe: Sequence[str] = (), second_stage: Optional[str] = None,
-                 **kwargs):
+                 norm_cap: Optional[float] = None, **kwargs):
         kwargs.setdefault("aggregation", "fedavg")
         super().__init__(*args, **kwargs)
         unknown = set(observe) - set(SIGNALS)
@@ -38,8 +60,11 @@ class TriageLearner(AttackedFederatedLearner):
             raise ValueError("the inversion signal needs model_type='logistic'")
         if second_stage is not None and second_stage not in _STRATEGIES:
             raise ValueError(f"unknown second_stage {second_stage!r}")
+        if norm_cap is not None and (second_stage is not None or norm_cap <= 0):
+            raise ValueError("norm_cap must be positive and cannot be combined with second_stage")
         self.rule = rule
         self.second_stage = second_stage
+        self.norm_cap = norm_cap
         self.num_images = num_images
         self.max_iters = max_iters
         self.record = record
@@ -81,7 +106,10 @@ class TriageLearner(AttackedFederatedLearner):
         decision = self.rule.decide(raw, self._h, sample_sizes=[p.n_train for p in participants])
         self._h = decision.h
 
+        scales = np.ones(len(updates))
         if self.second_stage is None:
+            if self.norm_cap is not None and not decision.fallback:
+                updates, scales = cap_included_norms(updates, decision.included, self.norm_cap)
             theta_list = [self._global_params + u for u in updates]
             self._global_params = sum(w * th for w, th in zip(decision.weights, theta_list))
         else:
@@ -92,6 +120,8 @@ class TriageLearner(AttackedFederatedLearner):
             records = decision.records(round_num, [p.id for p in participants])
             for i, row in enumerate(records):
                 row["is_byz"] = bool(is_byz[i])
+                if self.norm_cap is not None:
+                    row["cap_scale"] = float(scales[i])
                 for s in self.signals:
                     if s not in row:
                         row[s] = float(raw[s][i])

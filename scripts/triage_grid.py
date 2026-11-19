@@ -13,7 +13,9 @@ Systems:
               evaluated on all 10), both once per α with attack "none"; oracle_uniform (attacked
               run in which exactly the honest clients are averaged, with uniform weights)
   TRIAGE      every entry of CONFIGS (a TriageRule configuration, plus an optional
-              `second_stage` rule that aggregates the included clients)
+              `second_stage` rule that aggregates the included clients, or an optional `norm_cap`
+              factor k that scales included updates down to k times their median norm; `tri_all_sc`
+              is `tri_all` with k = 3, block D2)
 
 Cells: α ∈ {0.5, 0.1, 0.05} × 7 attacks, without fltrust_aligned at α ∈ {0.1, 0.05} (19 cells);
 clients 0 and 1 Byzantine; root of 100 samples drawn with the seed from the server validation set.
@@ -98,6 +100,8 @@ CONFIGS: Dict[str, dict] = {
     "tri_all_samples": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="samples",
                             lam=2.0),
     "tri_all_soft": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="soft", lam=2.0),
+    "tri_all_sc": dict(signals=[INVERSION, SERVER_COSINE], combine="all", b=0.5, weighting="uniform", lam=2.0,
+                       norm_cap=3.0),
     "cos_bin_clip": dict(signals=[SERVER_COSINE], b=0.5, weighting="uniform", lam=2.0, second_stage="norm_clip"),
     "sr_bin_clip": dict(signals=[INVERSION], b=0.5, weighting="uniform", lam=2.0, second_stage="norm_clip"),
 }
@@ -248,8 +252,9 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
         observe = [s for s in ALL_SIGNALS if s != INVERSION or model == "logistic"] if log else []
         cfg = dict(CONFIGS[system])
         second_stage = cfg.pop("second_stage", None)
+        norm_cap = cfg.pop("norm_cap", None)
         learner = TriageLearner(attack_type=attack, byzantine_ids=BYZ, rule=TriageRule(**cfg), record=log,
-                                observe=observe, second_stage=second_stage, **common)
+                                observe=observe, second_stage=second_stage, norm_cap=norm_cap, **common)
         history = learner.train(participants, root_data=root, verbose=False)
     else:
         raise ValueError(f"unknown system {system!r}")

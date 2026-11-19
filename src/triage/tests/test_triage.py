@@ -288,3 +288,36 @@ class TestFlame:
             learner.train(participants, verbose=False)
             runs.append(learner.global_params)
         np.testing.assert_array_equal(runs[0], runs[1])
+
+
+class TestNormCap:
+    def test_caps_only_included_updates_above_k_times_median(self):
+        from src.triage.learner import cap_included_norms
+
+        updates = [np.full(4, 1.0), np.full(4, 1.0), np.full(4, 10.0), np.full(4, 50.0)]
+        included = np.array([True, True, True, False])
+        out, scales = cap_included_norms(updates, included, 3.0)
+        bound = 3.0 * np.linalg.norm(updates[0])
+        assert out[0] is updates[0] and out[1] is updates[1]
+        assert np.isclose(np.linalg.norm(out[2]), bound) and scales[2] < 1
+        assert out[3] is updates[3] and scales[3] == 1.0
+
+    def _train(self, **kw):
+        participants = make_synthetic_participants(n_clients=10, n_train=60)
+        learner = TriageLearner(n_rounds=4, n_classes=2, seed=1, attack_type="gaussian_noise",
+                                byzantine_ids=[0, 1], rule=TriageRule([SERVER_COSINE], combine="all"), **kw)
+        return learner, learner.train(participants, verbose=False)
+
+    def test_huge_cap_is_bit_identical_and_logs_scale(self):
+        a, ha = self._train()
+        b, hb = self._train(norm_cap=1e12)
+        assert np.array_equal(a.global_params, b.global_params)
+        assert [h.global_accuracy for h in ha] == [h.global_accuracy for h in hb]
+        assert all(r["cap_scale"] == 1.0 for r in b.log) and "cap_scale" not in a.log[0]
+
+    def test_rejects_second_stage_and_nonpositive(self):
+        with pytest.raises(ValueError):
+            TriageLearner(n_rounds=1, n_classes=2, rule=TriageRule([SERVER_COSINE]), norm_cap=3.0,
+                          second_stage="trimmed_mean")
+        with pytest.raises(ValueError):
+            TriageLearner(n_rounds=1, n_classes=2, rule=TriageRule([SERVER_COSINE]), norm_cap=0.0)
