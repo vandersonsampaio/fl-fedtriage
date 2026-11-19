@@ -7,9 +7,12 @@ TRIAGE is a research project on **Byzantine-robust aggregation for Federated Lea
 - **agreement between independent pieces of gradient evidence** as the signal.
 
 > **Status:** confirmed on unused seeds. On seeds 62–71, under the frozen preregistration, `tri_all` beats the best single signal (+3.4 p.p.), FLTrust (+2.7) and FLAME (+6.9) on BloodMNIST, all significant after Holm, and is not inferior to the best single signal on MNIST (+0.9). See [`results/f3_confirmation/RESULT.md`](results/f3_confirmation/RESULT.md) (TRIAGE is the thesis' GRADF-v2).
+>
+> **Mechanism (descriptive, development seeds):** the gain comes from excluding fewer honest clients, not from catching more attackers. By the rule fixed before the runs, the claim is "agreement as protection against false positives" ([`results/inclusion_mechanism/RESULT.md`](results/inclusion_mechanism/RESULT.md)). **Late collapse (D1, 500 rounds):** only one cell breaks, sign flipping at α = 0.05 (−25 p.p. on 5/5 seeds); by the frozen rule it is not attributed to the AND rule, and `tri_all` keeps +2.3 p.p. over `cos_bin` at round 500 ([`results/horizon500/RESULT.md`](results/horizon500/RESULT.md)).
 
 - [Background: what the fl-gradf audit established](#background-what-the-fl-gradf-audit-established)
 - [Confirmation results](#confirmation-results)
+- [Mechanism of the gain](#mechanism-of-the-gain)
 - [Development results](#development-results)
 - [Provenance](#provenance)
 - [Contents](#contents)
@@ -49,6 +52,24 @@ Same setting as below, on seeds 62–71, which were never used in development. T
 
 With a 20-sample root, `tri_all` still beats the best single signal on that root (+5.73), FLTrust (+2.07) and FLAME (+4.57) on BloodMNIST, all significant after Holm. The limitations below were seen again on the confirmation seeds.
 
+**Caveat on FLTrust.** The confirmation used FLTrust with the server update trained by epochs, not with the clients' number of steps. A screen on seeds 72–76 reran FLTrust with step parity ([`results/fltrust_parity/RESULT.md`](results/fltrust_parity/RESULT.md)). By its frozen rule, the claims against FLTrust are not at risk on BloodMNIST at either root. The screen is one-sided, though: `tri_all` and the cosine signals also read the server update's direction, and they have not been measured under parity.
+
+---
+
+## Mechanism of the gain
+
+Block B1, descriptive, seeds 72–76. `tri_all`, `cos_bin`, `cosserver_only` and `sr_bin` were run with per-client logs (760 jobs). Rates are over all rounds and cells. FN = Byzantine clients included; FP = honest clients excluded.
+
+| BloodMNIST | `tri_all` | `cos_bin` | `cosserver_only` | `sr_bin` |
+|---|---:|---:|---:|---:|
+| FN | 0.534 | 0.262 | 0.255 | 0.426 |
+| FP | **0.072** | 0.438 | 0.429 | 0.222 |
+
+- Against the best single signal, 97% of the gross flows in `tri_all`'s favor are honest clients it keeps and the signal drops. The rule fixed before the runs therefore reads "agreement as protection against false positives". MNIST shows the same pattern (0.953).
+- `tri_all` lets in more Byzantine clients than any single signal. The counts are not weighted by effect on the model, and how much harm those clients do was not measured.
+- In this grid, `tri_all` − best single signal on BloodMNIST is +2.76 p.p. at H = 250 (CI95 +1.46; +4.07). At H = 300 and on MNIST, the gain is not shown to be above zero.
+- The outcome is close to structural: with exclusion only when both signals flag, `tri_all` includes every client that either signal alone would include on the same update.
+
 ---
 
 ## Development results
@@ -71,7 +92,7 @@ The BloodMNIST result also holds on seeds 77–81 at H = 150 (`results/bloodmnis
 **Known limitations:**
 - No variant stops a trigger backdoor (`results/backdoor/`).
 - `tri_all` loses on label flipping on MNIST.
-- It collapses late on sign flipping at α = 0.05, after round 200 on BloodMNIST, because it has no scale control (`results/collapse_diag/`, `results/clipping_h300/`).
+- It collapses late on sign flipping at α = 0.05, after round 200 on BloodMNIST, because it has no scale control (`results/collapse_diag/`, `results/clipping_h300/`). Up to 500 rounds it is the only cell that breaks: all five seeds end near 0.40, with the two Byzantine clients included in almost every round and their norm growing to about 7× the honest mean; `low_mag_backdoor` at α = 0.1 drifts down slowly (−3.6 p.p.) (`results/horizon500/`).
 - It needs a representative root of about 20 samples or more (`results/root_cost/`).
 
 The `RESULT.md` in each folder has the commands and the full tables.
@@ -110,6 +131,10 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `scripts/determinism_check.py`, `scripts/parity_fl_gradf.py`, `results/determinism/` | Same-seed determinism check for all baselines and parity with fl-gradf | new |
 | `results/signal_auc/`, `results/f2_agreement/`, `results/f2_mad/`, `results/bloodmnist_reference/`, `results/root_cost/`, `results/backdoor/`, `results/clipping/`, `results/clipping_h300/`, `results/horizon300/`, `results/collapse_diag/`, `results/flame/`, `results/ablation_h300/` | Development experiments on seeds 72–81, each with a `RESULT.md`; `results/flame_h300/` and `results/ablation/` hold raw outputs documented in `results/flame/` and `results/ablation_h300/` | new |
 | `scripts/triage_confirm.py`, `results/f3_confirmation/` | Frozen preregistration of the confirmation on seeds 62–71 (`PREREGISTRATION.md`, `PREREGISTRATION.sha256`), its raw outputs, the preregistered tests and `RESULT.md` | new |
+| `results/fltrust_parity/` | FLTrust with step parity (`server_steps`) on seeds 72–76: a screen of the confirmation's claims against FLTrust (`ADDENDUM.md`, `RESULT.md`) | new |
+| `scripts/inclusion_diag.py`, `scripts/analyze_inclusion_mechanism.py`, `results/inclusion_mechanism/` | Inclusion log and mechanism of `tri_all` (B1): FN/FP rates, norm ratio, and the decomposition of the gain under the rule in `PLAN.md` | new |
+| `results/horizon500/` | Late collapse up to 500 rounds on BloodMNIST (D1): `tri_all`, `cos_bin` and the no-attack ceiling. `PLAN.md` was written before the runs; the result is in `RESULT.md` | new |
+| `results/tri_all_step_parity/` | `tri_all`, `cos_bin` and `cosserver_only` under FLTrust step parity (root 100, seeds 72–76). `PLAN.md` was written before the runs; the runs are in progress | new |
 | `tests/`, `src/**/tests/` | 148 unit and integration tests | new determinism and TRIAGE tests |
 
 Not imported: GRADF's notebooks, the paper drafts, the audit result folders and their analysis scripts, and the local references. Removed after the import: see [Provenance](#provenance).

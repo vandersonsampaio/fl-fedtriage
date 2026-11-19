@@ -1,0 +1,3 @@
+alpha,attack_type,tri_late,cos_bin_any,cos_bin_late,ceiling_any,attributed_to_AND_plan,attributed_if_late_only,tri_median_onset
+0.05,sign_flipping,3,5,0,0,False,True,263.0
+0.1,low_mag_backdoor,3,5,0,0,False,True,438.0
