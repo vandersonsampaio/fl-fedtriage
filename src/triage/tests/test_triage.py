@@ -321,3 +321,44 @@ class TestNormCap:
                           second_stage="trimmed_mean")
         with pytest.raises(ValueError):
             TriageLearner(n_rounds=1, n_classes=2, rule=TriageRule([SERVER_COSINE]), norm_cap=0.0)
+
+
+class TestAdaptive:
+    def _run(self, cls, **kw):
+        participants = make_synthetic_participants(n_clients=10, n_train=60)
+        learner = cls(n_rounds=3, n_classes=2, seed=1, byzantine_ids=[0, 1],
+                      rule=TriageRule([SERVER_COSINE], combine="all"), **kw)
+        learner.train(participants, root_data={"X": participants[2].X_train[:20],
+                                               "y": participants[2].y_train[:20]}, verbose=False)
+        return learner
+
+    @pytest.mark.parametrize("base", ["sign", "noise", "label"])
+    def test_always_passing_equals_the_base_attack(self, base):
+        from src.triage.adaptive import BASES, AdaptiveTriageLearner
+
+        class AlwaysPass(AdaptiveTriageLearner):
+            def _passes(self, *a, **k):
+                return True
+
+        a = self._run(AlwaysPass, adaptive=f"evade_{base}")
+        b = self._run(TriageLearner, attack_type=BASES[base])
+        np.testing.assert_array_equal(a.global_params, b.global_params)
+        assert [c["lam"] for c in a.crafted] == [1.0] * 3
+
+    def test_never_passing_sends_honest_updates(self):
+        from src.triage.adaptive import AdaptiveTriageLearner
+
+        class NeverPass(AdaptiveTriageLearner):
+            def _passes(self, *a, **k):
+                return False
+
+        a = self._run(NeverPass, adaptive="evade_sign")
+        b = self._run(TriageLearner, attack_type="none")
+        np.testing.assert_array_equal(a.global_params, b.global_params)
+
+    def test_unknown_name_is_rejected(self):
+        from src.triage.adaptive import AdaptiveTriageLearner, parse_adaptive
+
+        assert parse_adaptive("evade_sign") == ("evade", "sign") and parse_adaptive("sign_flipping") is None
+        with pytest.raises(ValueError):
+            AdaptiveTriageLearner(n_rounds=1, n_classes=2, rule=TriageRule([SERVER_COSINE]), adaptive="nope")

@@ -56,6 +56,7 @@ ALPHAS = [0.5, 0.1, 0.05]
 ATTACKS = ["fltrust_aligned", "trim_attack", "krum_collusion", "low_mag_backdoor",
            "sign_flipping", "gaussian_noise", "label_flipping"]
 EXTRA_ATTACKS = ["backdoor_trigger"]
+from src.triage.adaptive import ADAPTIVE_ATTACKS  # noqa: E402  (block C; TRIAGE systems only)
 EXCLUDED = {(0.1, "fltrust_aligned"), (0.05, "fltrust_aligned")}
 BYZ = [0, 1]
 ROOT_SIZE = 100
@@ -105,7 +106,127 @@ CONFIGS: Dict[str, dict] = {
     "cos_bin_clip": dict(signals=[SERVER_COSINE], b=0.5, weighting="uniform", lam=2.0, second_stage="norm_clip"),
     "sr_bin_clip": dict(signals=[INVERSION], b=0.5, weighting="uniform", lam=2.0, second_stage="norm_clip"),
 }
-SYSTEMS = RULES + CEILINGS + list(CONFIGS)
+# Learned defenses of F4 (results/f4_learned/PREREGISTRATION.md), built as in
+# scripts/determinism_check.py. `random` picks one of the 7 rules uniformly per round, through
+# the same hardening layers as `gradf` (as in P1).
+LEARNED = ["gradf", "fedstrategist", "adaaggrl", "tars", "adabfl", "random"]
+NEEDS_PRETRAIN = {"gradf", "fedstrategist"}
+# GRADF's hardening layers (gradf, random). MNIST: as published in P1. BloodMNIST: P1's rule for
+# CIFAR-10 — the DP epsilon scaled by the square root of the parameter count (18,824 logistic
+# parameters against MNIST's 7,850) and the input-validation bound tau set to the largest honest
+# update norm observed in development (B1 logs, seeds 72–76: 15.38). Pending the author's
+# confirmation before the F4 freeze.
+GRADF_LAYERS = {
+    "mnist": dict(magnitude_threshold=5.0, dp_epsilon=50.0),
+    "bloodmnist": dict(magnitude_threshold=15.38, dp_epsilon=round(50.0 * (18824 / 7850) ** 0.5, 2)),
+}
+# A1: schedules counted in rounds scale with the horizon above P1's reference of 15 rounds. Only
+# GRADF's epsilon-greedy decay (20 rounds) is such a schedule; TARS already decays over n_rounds.
+REF_HORIZON = 15
+GRADF_EPS_DECAY = 20
+SYSTEMS = RULES + CEILINGS + list(CONFIGS) + LEARNED
+
+
+def scaled_eps_decay(rounds: int) -> int:
+    return round(GRADF_EPS_DECAY * max(rounds, REF_HORIZON) / REF_HORIZON)
+
+
+def build_learned(system: str, participants, attack: str, seed: int, rounds: int, dataset: str, common: dict):
+    """Returns (learner, pretraining seconds) for a learned defense of F4."""
+    from src.defense.rl_selector import RLDefenseSelector
+    from src.experiments.exp1_baseline import GroundTruthClassifierStub, RandomSelector, train_gradf_models
+    from src.experiments.exp4_adaptive import AdaBFLLearner, TARSLearner
+    from src.experiments.exp10_selector_comparison import AdaAggRLGridLearner, FedStrategistGridLearner
+    from src.fl.gradf_learner import GRADFFederatedLearner
+
+    labels = ["none", attack]
+    common = dict(common, attack_type=attack, byzantine_ids=BYZ)
+    classifier = selector = None
+    pretrain = 0.0
+    if system in NEEDS_PRETRAIN:
+        t0 = time.time()
+        classifier, selector, _labels, _oracle = train_gradf_models(
+            participants, attack, len(BYZ) / len(participants), common["n_classes"], n_rounds=8, seed=seed)
+        pretrain = time.time() - t0
+        selector.epsilon_decay_rounds = scaled_eps_decay(rounds)
+    if system == "gradf":
+        learner = GRADFFederatedLearner(aggregation="fedavg", classifier=classifier, selector=selector,
+                                        attack_labels=labels, **GRADF_LAYERS[dataset], **common)
+    elif system == "random":
+        learner = GRADFFederatedLearner(aggregation="fedavg", classifier=GroundTruthClassifierStub(),
+                                        selector=RandomSelector(RLDefenseSelector().actions, seed=seed),
+                                        attack_labels=labels, **GRADF_LAYERS[dataset], **common)
+    elif system == "fedstrategist":
+        learner = FedStrategistGridLearner(variant="b", shared_classifier=classifier, n_labels=len(labels), **common)
+    elif system == "adaaggrl":
+        learner = AdaAggRLGridLearner(feature_extractor="random", dataset=dataset, **common)
+    elif system == "tars":
+        learner = TARSLearner(attack_sequence=[attack], **common)
+    elif system == "adabfl":
+        learner = AdaBFLLearner(attack_sequence=[attack], **common)
+    else:
+        raise ValueError(f"unknown learned defense {system!r}")
+    return learner, pretrain
+
+
+def instrument_server_time(learner) -> List[float]:
+    """Records, per round, the server time: the wall time of the round minus the time spent
+    computing the clients' updates (local training and the attack simulation). It wraps the
+    instance's `_run_round` and `_compute_param_updates` and the module-level
+    `compute_param_updates_auto` (informed attacks); it uses no randomness, so trajectories do not
+    change. The per-round test evaluation stays inside the server time, the same for every system."""
+    import src.fl.attacked_learner as al
+
+    learner._client_seconds = 0.0
+    learner._in_client = False
+    out: List[float] = []
+
+    def guard(fn):
+        def wrapped(*a, **k):
+            if learner._in_client:
+                return fn(*a, **k)
+            learner._in_client = True
+            t0 = time.perf_counter()
+            try:
+                return fn(*a, **k)
+            finally:
+                learner._client_seconds += time.perf_counter() - t0
+                learner._in_client = False
+        return wrapped
+
+    learner._client_guard = guard
+    learner._compute_param_updates = guard(learner._compute_param_updates)
+    _patch_auto_updates(al)
+    run = learner._run_round
+
+    def timed(round_num, participants, root_data):
+        learner._client_seconds = 0.0
+        t0 = time.perf_counter()
+        res = run(round_num, participants, root_data)
+        out.append(time.perf_counter() - t0 - learner._client_seconds)
+        return res
+
+    learner._run_round = timed
+    return out
+
+
+def _patch_auto_updates(al):
+    import importlib
+
+    orig = al.compute_param_updates_auto
+    if getattr(orig, "_timed", False):
+        return
+
+    def auto(learner, *a, **k):
+        g = getattr(learner, "_client_guard", None)
+        return g(orig)(learner, *a, **k) if g else orig(learner, *a, **k)
+
+    auto._timed = True
+    for name in ("src.fl.attacked_learner", "src.fl.gradf_learner", "src.triage.learner",
+                 "src.experiments.exp10_selector_comparison"):
+        mod = importlib.import_module(name)
+        if getattr(mod, "compute_param_updates_auto", None) is orig:
+            mod.compute_param_updates_auto = auto
 
 
 def cells(attacks: Optional[List[str]] = None):
@@ -233,36 +354,48 @@ def run_job(dataset: str, system: str, alpha: float, attack: str, seed: int, rou
                   model_type=model, input_shape=DATASETS[dataset]["input_shape"], server_steps=server_steps)
     t0 = time.time()
     learner = None
-    if system in RULES:
+    pretrain = 0.0
+    if system in LEARNED:
+        learner, pretrain = build_learned(system, participants, attack, seed, rounds, dataset, common)
+    elif attack in ADAPTIVE_ATTACKS and system not in CONFIGS:
+        raise ValueError(f"adaptive attacks are implemented only for the TRIAGE systems, not {system!r}")
+    elif system in RULES:
         learner = build_rule_learner()(attack_type=attack, byzantine_ids=BYZ, rule=RULE_STRATEGY.get(system, system),
                                        **common)
-        history = learner.train(participants, root_data=root, verbose=False)
     elif system == "ceiling_fedavg10":
         learner = AttackedFederatedLearner(attack_type="none", byzantine_ids=BYZ, aggregation="fedavg", **common)
-        history = learner.train(participants, root_data=root, verbose=False)
     elif system == "oracle_fedavg8":
-        honest = [p for i, p in enumerate(participants) if i not in BYZ]
         learner = build_oracle_learner()[1](attack_type="none", byzantine_ids=[], aggregation="fedavg",
                                             eval_on=participants, **common)
-        history = learner.train(honest, root_data=root, verbose=False)
     elif system == "oracle_uniform":
         learner = build_oracle_learner()[0](attack_type=attack, byzantine_ids=BYZ, **common)
-        history = learner.train(participants, root_data=root, verbose=False)
     elif system in CONFIGS:
         observe = [s for s in ALL_SIGNALS if s != INVERSION or model == "logistic"] if log else []
         cfg = dict(CONFIGS[system])
         second_stage = cfg.pop("second_stage", None)
         norm_cap = cfg.pop("norm_cap", None)
-        learner = TriageLearner(attack_type=attack, byzantine_ids=BYZ, rule=TriageRule(**cfg), record=log,
-                                observe=observe, second_stage=second_stage, norm_cap=norm_cap, **common)
-        history = learner.train(participants, root_data=root, verbose=False)
+        if attack in ADAPTIVE_ATTACKS:
+            from src.triage.adaptive import AdaptiveTriageLearner
+            learner = AdaptiveTriageLearner(adaptive=attack, byzantine_ids=BYZ, rule=TriageRule(**cfg), record=log,
+                                            observe=observe, second_stage=second_stage, norm_cap=norm_cap,
+                                            **common)
+        else:
+            learner = TriageLearner(attack_type=attack, byzantine_ids=BYZ, rule=TriageRule(**cfg), record=log,
+                                    observe=observe, second_stage=second_stage, norm_cap=norm_cap, **common)
     else:
         raise ValueError(f"unknown system {system!r}")
+    server_sec = instrument_server_time(learner)
+    trained_on = [p for i, p in enumerate(participants) if i not in BYZ] if system == "oracle_fedavg8" else participants
+    history = learner.train(trained_on, root_data=root, verbose=False)
     accs = [h.global_accuracy for h in history]
     sec = time.time() - t0
     df = pd.DataFrame({"dataset": dataset, "model": model, "system": name, "alpha": alpha,
                        "attack_type": attack, "seed": seed, "round": np.arange(1, len(accs) + 1),
-                       "accuracy": accs, "sec": sec, "server_steps": server_steps})
+                       "accuracy": accs, "sec": sec, "server_steps": server_steps,
+                       "server_sec": server_sec, "pretrain_sec": pretrain})
+    if getattr(learner, "crafted", None):
+        df["adaptive_lam"] = [c["lam"] for c in learner.crafted] if len(learner.crafted) == len(df) else np.nan
+        df["adaptive_kappa"] = [c["kappa"] for c in learner.crafted] if len(learner.crafted) == len(df) else np.nan
     if attack in EXTRA_ATTACKS:
         df["asr"] = [h.attack_success_rate for h in history]
     tmp = path + ".tmp"
@@ -304,7 +437,7 @@ def main():
     c.add_argument("--dataset", required=True, choices=sorted(DATASETS))
     c.add_argument("--system", required=True, choices=SYSTEMS)
     c.add_argument("--alpha", type=float, required=True)
-    c.add_argument("--attack", required=True, choices=ATTACKS + EXTRA_ATTACKS + ["none"])
+    c.add_argument("--attack", required=True, choices=ATTACKS + EXTRA_ATTACKS + ADAPTIVE_ATTACKS + ["none"])
     c.add_argument("--seed", type=int, required=True)
     c.add_argument("--rounds", type=int, default=150)
     c.add_argument("--model", default="logistic", choices=["logistic", "cnn"])
@@ -314,7 +447,7 @@ def main():
     j.add_argument("--datasets", nargs="+", default=["mnist"], choices=sorted(DATASETS))
     j.add_argument("--systems", nargs="+", required=True, choices=SYSTEMS)
     j.add_argument("--seeds", type=int, nargs="+", required=True)
-    j.add_argument("--attacks", nargs="+", default=None, choices=ATTACKS + EXTRA_ATTACKS)
+    j.add_argument("--attacks", nargs="+", default=None, choices=ATTACKS + EXTRA_ATTACKS + ADAPTIVE_ATTACKS)
     j.add_argument("--rounds", type=int, default=150)
     j.add_argument("--model", default="logistic", choices=["logistic", "cnn"])
     j.add_argument("--log", action="store_true")
