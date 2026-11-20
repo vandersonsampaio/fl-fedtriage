@@ -8,7 +8,7 @@ TRIAGE is a research project on **Byzantine-robust aggregation for Federated Lea
 
 > **Status:** confirmed on unused seeds. On seeds 62–71, under the frozen preregistration, `tri_all` beats the best single signal (+3.4 p.p.), FLTrust (+2.7) and FLAME (+6.9) on BloodMNIST, all significant after Holm, and is not inferior to the best single signal on MNIST (+0.9). See [`results/f3_confirmation/RESULT.md`](results/f3_confirmation/RESULT.md) (TRIAGE is the thesis' GRADF-v2).
 >
-> **Mechanism (descriptive, development seeds):** the gain comes from excluding fewer honest clients, not from catching more attackers. By the rule fixed before the runs, the claim is "agreement as protection against false positives" ([`results/inclusion_mechanism/RESULT.md`](results/inclusion_mechanism/RESULT.md)). **Late collapse (D1, 500 rounds):** only one cell breaks, sign flipping at α = 0.05 (−25 p.p. on 5/5 seeds); by the frozen rule it is not attributed to the AND rule, and `tri_all` keeps +2.3 p.p. over `cos_bin` at round 500 ([`results/horizon500/RESULT.md`](results/horizon500/RESULT.md)).
+> **Mechanism (descriptive, development seeds):** the gain comes from excluding fewer honest clients, not from catching more attackers. By the rule fixed before the runs, the claim is "agreement as protection against false positives" ([`results/inclusion_mechanism/RESULT.md`](results/inclusion_mechanism/RESULT.md)). **Late collapse (D1, 500 rounds):** only one cell breaks, sign flipping at α = 0.05 (−25 p.p. on 5/5 seeds); by the frozen rule it is not attributed to the AND rule, and `tri_all` keeps +2.3 p.p. over `cos_bin` at round 500 ([`results/horizon500/RESULT.md`](results/horizon500/RESULT.md)). **D2 (exploratory):** capping only included norms above 3 × their median removes that collapse (drop 1–2 p.p. instead of 25, 5/5 seeds) at no measurable cost (+0.64 p.p. on BloodMNIST at H = 250, +0.48 on MNIST) ([`results/tri_all_sc/RESULT.md`](results/tri_all_sc/RESULT.md)).
 
 - [Background: what the fl-gradf audit established](#background-what-the-fl-gradf-audit-established)
 - [Confirmation results](#confirmation-results)
@@ -92,7 +92,7 @@ The BloodMNIST result also holds on seeds 77–81 at H = 150 (`results/bloodmnis
 **Known limitations:**
 - No variant stops a trigger backdoor (`results/backdoor/`).
 - `tri_all` loses on label flipping on MNIST.
-- It collapses late on sign flipping at α = 0.05, after round 200 on BloodMNIST, because it has no scale control (`results/collapse_diag/`, `results/clipping_h300/`). Up to 500 rounds it is the only cell that breaks: all five seeds end near 0.40, with the two Byzantine clients included in almost every round and their norm growing to about 7× the honest mean; `low_mag_backdoor` at α = 0.1 drifts down slowly (−3.6 p.p.) (`results/horizon500/`).
+- It collapses late on sign flipping at α = 0.05, after round 200 on BloodMNIST, because it has no scale control (`results/collapse_diag/`, `results/clipping_h300/`). Up to 500 rounds it is the only cell that breaks: all five seeds end near 0.40, with the two Byzantine clients included in almost every round and their norm growing to about 7× the honest mean; `low_mag_backdoor` at α = 0.1 drifts down slowly (−3.6 p.p.) (`results/horizon500/`). A cap on included norms above 3 × their median removes this collapse without cost on seeds 72–76 (`results/tri_all_sc/`, exploratory).
 - It needs a representative root of about 20 samples or more (`results/root_cost/`).
 
 The `RESULT.md` in each folder has the commands and the full tables.
@@ -136,7 +136,7 @@ This repository was created from **[fl-gradf](https://github.com/vandersonsampai
 | `results/horizon500/` | Late collapse up to 500 rounds on BloodMNIST (D1): `tri_all`, `cos_bin` and the no-attack ceiling. `PLAN.md` was written before the runs; the result is in `RESULT.md` | new |
 | `results/tri_all_step_parity/` | `tri_all`, `cos_bin` and `cosserver_only` under FLTrust step parity (root 100, seeds 72–76). `PLAN.md` was written before the runs; `RESULT.md`: not at risk on either side | new |
 | `results/tri_all_root20/` | The same three systems at root 20, native and under step parity (seeds 72–76). `PLAN.md` was written before the runs; paused at 28/1,140 jobs so that D2 runs first, resumes after it (`AMENDMENT.md`) | new |
-| `results/tri_all_sc/` | Block D2: `tri_all` with a cap only on included norms above 3 × their median (seeds 72–76). `PLAN.md` was written before the runs; running on the VMs since 2026-11-19 | new |
+| `results/tri_all_sc/` | Block D2: `tri_all` with a cap only on included norms above 3 × their median (seeds 72–76). `PLAN.md` was written before the runs; `RESULT.md`: passes all three conditions (the late collapse goes away, Δ +0.64 p.p. on BloodMNIST at H = 250 and +0.48 on MNIST, no new collapse); exploratory, `tri_all` unchanged | new |
 | `tests/`, `src/**/tests/` | 148 unit and integration tests | new determinism and TRIAGE tests |
 
 Not imported: GRADF's notebooks, the paper drafts, the audit result folders and their analysis scripts, and the local references. Removed after the import: see [Provenance](#provenance).
