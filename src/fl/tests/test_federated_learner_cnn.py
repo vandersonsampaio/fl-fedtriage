@@ -1,8 +1,7 @@
 """
 Infrastructure tests for `model_type='cnn'` — cover `_CNNModel` in isolation and
 `FederatedLearner` end to end. Do not test real learning quality (that is
-validated separately on real MNIST/CIFAR-10, see
-`src/experiments/exp1_cnn_scale.py`) — only that the flat-vector
+validated separately on real data) — only that the flat-vector
 infrastructure (fit/set_params/params/accuracy) and the `_make_model`
 dispatch work. Small synthetic data (`input_shape=(4,4,1)`, 16 features) so
 the suite runs in milliseconds.

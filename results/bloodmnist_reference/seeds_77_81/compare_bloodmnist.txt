@@ -1,0 +1,63 @@
+=== bloodmnist: candidates vs references (diff in p.p., paired by cell and seed) ===
+  H candidate                   reference  n_seeds  acc_candidate  acc_reference  diff_pp  p_wilcoxon  p_tost
+ 15   tri_all         best_single(sr_bin)        5         0.5117         0.4627   4.9031      0.0625  0.9949
+ 15   tri_all      oracle_single_per_cell        5         0.5117         0.4863   2.5403      0.0625  0.9785
+ 15   tri_all                      sr_bin        5         0.5117         0.4627   4.9031      0.0625  0.9949
+ 15   tri_all              cosserver_only        5         0.5117         0.4548   5.6888      0.0625  0.9977
+ 15   tri_all                     cos_bin        5         0.5117         0.4631   4.8593      0.0625  0.9913
+ 15   tri_all                     fltrust        5         0.5117         0.4069  10.4829      0.0625  0.9999
+ 15   tri_all                trimmed_mean        5         0.5117         0.4069  10.4819      0.0625  1.0000
+ 15   tri_all                  clustering        5         0.5117         0.4488   6.2900      0.0625  0.9997
+ 15   tri_all                      median        5         0.5117         0.3455  16.6169      0.0625  1.0000
+ 15   tri_all                      fedavg        5         0.5117         0.4842   2.7537      0.0625  0.9693
+ 15   tri_all              oracle_uniform        5         0.5117         0.5315  -1.9801      0.0625  0.9948
+ 50   tri_all best_single(cosserver_only)        5         0.5817         0.5458   3.5869      0.1250  0.9402
+ 50   tri_all      oracle_single_per_cell        5         0.5817         0.5768   0.4890      0.8125  0.3215
+ 50   tri_all                      sr_bin        5         0.5817         0.5377   4.4036      0.0625  0.9691
+ 50   tri_all              cosserver_only        5         0.5817         0.5458   3.5869      0.1250  0.9402
+ 50   tri_all                     cos_bin        5         0.5817         0.5393   4.2391      0.0625  0.9776
+ 50   tri_all                     fltrust        5         0.5817         0.4823   9.9364      0.0625  0.9988
+ 50   tri_all                trimmed_mean        5         0.5817         0.4857   9.6028      0.0625  1.0000
+ 50   tri_all                  clustering        5         0.5817         0.4900   9.1688      0.0625  0.9999
+ 50   tri_all                      median        5         0.5817         0.4307  15.0985      0.0625  1.0000
+ 50   tri_all                      fedavg        5         0.5817         0.5145   6.7171      0.0625  0.9997
+ 50   tri_all              oracle_uniform        5         0.5817         0.6015  -1.9804      0.0625  0.8926
+150   tri_all best_single(cosserver_only)        5         0.6287         0.5884   4.0284      0.0625  0.9686
+150   tri_all      oracle_single_per_cell        5         0.6287         0.6092   1.9428      0.1875  0.8069
+150   tri_all                      sr_bin        5         0.6287         0.5652   6.3497      0.0625  0.9954
+150   tri_all              cosserver_only        5         0.6287         0.5884   4.0284      0.0625  0.9686
+150   tri_all                     cos_bin        5         0.6287         0.6006   2.8044      0.1250  0.9296
+150   tri_all                     fltrust        5         0.6287         0.5968   3.1887      0.1250  0.9094
+150   tri_all                trimmed_mean        5         0.6287         0.5162  11.2441      0.0625  1.0000
+150   tri_all                  clustering        5         0.6287         0.5454   8.3241      0.0625  1.0000
+150   tri_all                      median        5         0.6287         0.4668  16.1893      0.0625  1.0000
+150   tri_all                      fedavg        5         0.6287         0.5592   6.9508      0.0625  0.9995
+150   tri_all              oracle_uniform        5         0.6287         0.6403  -1.1640      0.1250  0.5863
+
+=== bloodmnist: per cell vs the best single signal, H = 150 ===
+candidate               tri_all
+alpha attack_type              
+0.05  gaussian_noise       8.40
+      krum_collusion       7.37
+      label_flipping       1.86
+      low_mag_backdoor     8.27
+      sign_flipping       11.05
+      trim_attack          2.74
+0.10  gaussian_noise       2.41
+      krum_collusion       4.09
+      label_flipping       0.32
+      low_mag_backdoor     6.07
+      sign_flipping        0.07
+      trim_attack          0.01
+0.50  fltrust_aligned      5.21
+      gaussian_noise       8.07
+      krum_collusion       0.37
+      label_flipping       2.47
+      low_mag_backdoor     5.46
+      sign_flipping        2.37
+      trim_attack         -0.05
+
+wins / ties / losses (beyond 2 SE):
+verdict    tie  win
+candidate          
+tri_all     14    5

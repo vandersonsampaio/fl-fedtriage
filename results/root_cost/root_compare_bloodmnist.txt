@@ -1,0 +1,27 @@
+=== bloodmnist: variant root vs default root, same system (p.p., H = 150) ===
+ system      root  n  n_seeds  acc_a  acc_b  diff_pp  p_wilcoxon  seeds_ahead             worst_cell  worst_cell_pp
+cos_bin   c2-r100 95        5 0.4189 0.5996 -18.0701      0.0625            0    a0.05 sign_flipping       -46.7340
+fltrust   c2-r100 95        5 0.4133 0.5795 -16.6189      0.0625            0 a0.05 low_mag_backdoor       -43.1389
+tri_all   c2-r100 95        5 0.5683 0.6337  -6.5412      0.0625            0      a0.05 trim_attack       -46.5768
+cos_bin       r10 95        5 0.5200 0.5996  -7.9588      0.0625            0   a0.5 fltrust_aligned       -34.9020
+fltrust       r10 95        5 0.5090 0.5795  -7.0418      0.1250            1   a0.5 fltrust_aligned       -35.2995
+tri_all       r10 95        5 0.5884 0.6337  -4.5293      0.0625            0      a0.05 trim_attack       -23.5256
+cos_bin r100-n0.2 95        5 0.5611 0.5996  -3.8477      0.0625            0   a0.5 fltrust_aligned       -16.2996
+fltrust r100-n0.2 95        5 0.5315 0.5795  -4.7914      0.1250            1   a0.5 fltrust_aligned       -14.8316
+tri_all r100-n0.2 95        5 0.6194 0.6337  -1.4285      0.1875            1    a0.5 gaussian_noise        -5.1794
+cos_bin       r20 95        5 0.5346 0.5996  -6.5074      0.1250            1   a0.5 fltrust_aligned       -23.8585
+fltrust       r20 95        5 0.5596 0.5795  -1.9901      0.4375            1   a0.5 fltrust_aligned       -21.7243
+tri_all       r20 95        5 0.6241 0.6337  -0.9533      0.1250            1      a0.05 trim_attack        -6.0742
+
+=== bloodmnist: tri_all vs the other systems on the same root (p.p., H = 150) ===
+     root reference  n  n_seeds  acc_a  acc_b  diff_pp  p_wilcoxon  seeds_ahead            worst_cell  worst_cell_pp
+  default   cos_bin 95        5 0.6337 0.5996   3.4057      0.0625            5   a0.05 sign_flipping        -3.5198
+  default   fltrust 95        5 0.6337 0.5795   5.4231      0.0625            5   a0.5 label_flipping         0.1639
+  c2-r100   cos_bin 95        5 0.5683 0.4189  14.9346      0.0625            5     a0.05 trim_attack         0.3559
+  c2-r100   fltrust 95        5 0.5683 0.4133  15.5009      0.0625            5 a0.5 low_mag_backdoor        -1.1110
+      r10   cos_bin 95        5 0.5884 0.5200   6.8352      0.0625            5     a0.05 trim_attack        -8.7935
+      r10   fltrust 95        5 0.5884 0.5090   7.9357      0.0625            5     a0.05 trim_attack        -9.4768
+r100-n0.2   cos_bin 95        5 0.6194 0.5611   5.8248      0.0625            5   a0.05 sign_flipping        -5.3960
+r100-n0.2   fltrust 95        5 0.6194 0.5315   8.7860      0.0625            5   a0.5 gaussian_noise        -0.3570
+      r20   cos_bin 95        5 0.6241 0.5346   8.9598      0.0625            5    a0.1 sign_flipping        -3.3676
+      r20   fltrust 95        5 0.6241 0.5596   6.4599      0.0625            5   a0.1 gaussian_noise        -1.7774

@@ -1,0 +1,67 @@
+=== mnist: candidates vs references (diff in p.p., paired by cell and seed) ===
+  H candidate                   reference  n_seeds  acc_candidate  acc_reference  diff_pp  p_wilcoxon  p_tost
+ 15  cos_mad2 best_single(cosserver_only)        5         0.7733         0.8314  -5.8096      0.0625  0.9998
+ 15  cos_mad2      oracle_single_per_cell        5         0.7733         0.8448  -7.1458      0.0625  0.9998
+ 15  cos_mad2                      sr_bin        5         0.7733         0.8145  -4.1209      0.0625  0.9932
+ 15  cos_mad2              cosserver_only        5         0.7733         0.8314  -5.8096      0.0625  0.9998
+ 15  cos_mad2                     cos_bin        5         0.7733         0.8319  -5.8599      0.0625  0.9984
+ 15  cos_mad2                     fltrust        5         0.7733         0.7029   7.0394      0.0625  0.9955
+ 15  cos_mad3 best_single(cosserver_only)        5         0.7406         0.8314  -9.0820      0.0625  0.9999
+ 15  cos_mad3      oracle_single_per_cell        5         0.7406         0.8448 -10.4182      0.0625  1.0000
+ 15  cos_mad3                      sr_bin        5         0.7406         0.8145  -7.3934      0.0625  0.9995
+ 15  cos_mad3              cosserver_only        5         0.7406         0.8314  -9.0820      0.0625  0.9999
+ 15  cos_mad3                     cos_bin        5         0.7406         0.8319  -9.1323      0.0625  0.9999
+ 15  cos_mad3                     fltrust        5         0.7406         0.7029   3.7669      0.0625  0.9507
+ 50  cos_mad2 best_single(cosserver_only)        5         0.8179         0.8602  -4.2336      0.0625  0.9899
+ 50  cos_mad2      oracle_single_per_cell        5         0.8179         0.8722  -5.4363      0.0625  0.9975
+ 50  cos_mad2                      sr_bin        5         0.8179         0.8345  -1.6684      0.0625  0.8329
+ 50  cos_mad2              cosserver_only        5         0.8179         0.8602  -4.2336      0.0625  0.9899
+ 50  cos_mad2                     cos_bin        5         0.8179         0.8611  -4.3274      0.0625  0.9974
+ 50  cos_mad2                     fltrust        5         0.8179         0.8375  -1.9639      0.0625  0.8782
+ 50  cos_mad3 best_single(cosserver_only)        5         0.7830         0.8602  -7.7209      0.0625  0.9993
+ 50  cos_mad3      oracle_single_per_cell        5         0.7830         0.8722  -8.9237      0.0625  0.9997
+ 50  cos_mad3                      sr_bin        5         0.7830         0.8345  -5.1558      0.0625  0.9983
+ 50  cos_mad3              cosserver_only        5         0.7830         0.8602  -7.7209      0.0625  0.9993
+ 50  cos_mad3                     cos_bin        5         0.7830         0.8611  -7.8147      0.0625  0.9998
+ 50  cos_mad3                     fltrust        5         0.7830         0.8375  -5.4513      0.0625  0.9983
+150  cos_mad2 best_single(cosserver_only)        5         0.8398         0.8766  -3.6813      0.0625  0.9866
+150  cos_mad2      oracle_single_per_cell        5         0.8398         0.8887  -4.8858      0.0625  0.9976
+150  cos_mad2                      sr_bin        5         0.8398         0.8549  -1.5119      0.0625  0.7735
+150  cos_mad2              cosserver_only        5         0.8398         0.8766  -3.6813      0.0625  0.9866
+150  cos_mad2                     cos_bin        5         0.8398         0.8771  -3.7284      0.0625  0.9806
+150  cos_mad2                     fltrust        5         0.8398         0.8734  -3.3581      0.0625  0.9942
+150  cos_mad3 best_single(cosserver_only)        5         0.8047         0.8766  -7.1922      0.0625  0.9977
+150  cos_mad3      oracle_single_per_cell        5         0.8047         0.8887  -8.3967      0.0625  0.9991
+150  cos_mad3                      sr_bin        5         0.8047         0.8549  -5.0228      0.0625  0.9953
+150  cos_mad3              cosserver_only        5         0.8047         0.8766  -7.1922      0.0625  0.9977
+150  cos_mad3                     cos_bin        5         0.8047         0.8771  -7.2394      0.0625  0.9968
+150  cos_mad3                     fltrust        5         0.8047         0.8734  -6.8691      0.0625  0.9986
+
+=== mnist: per cell vs the best single signal, H = 150 ===
+candidate               cos_mad2  cos_mad3
+alpha attack_type                         
+0.05  gaussian_noise       -7.84     -7.77
+      krum_collusion       -2.54     -2.59
+      label_flipping       -0.93     -1.65
+      low_mag_backdoor      2.20      2.24
+      sign_flipping        -3.00    -21.96
+      trim_attack         -35.06    -51.69
+0.10  gaussian_noise      -11.15    -11.16
+      krum_collusion       -0.75     -1.21
+      label_flipping       -5.51    -10.23
+      low_mag_backdoor      3.04      3.22
+      sign_flipping        -2.50     -8.61
+      trim_attack          -6.87    -22.94
+0.50  fltrust_aligned      14.26     14.29
+      gaussian_noise      -10.05     -9.67
+      krum_collusion        0.23      0.15
+      label_flipping       -1.75     -2.91
+      low_mag_backdoor      1.09      1.07
+      sign_flipping        -0.31     -1.10
+      trim_attack          -2.49     -4.15
+
+wins / ties / losses (beyond 2 SE):
+verdict    loss  tie  win
+candidate                
+cos_mad2      8    8    3
+cos_mad3     11    5    3

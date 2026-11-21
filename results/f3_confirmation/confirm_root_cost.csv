@@ -1,0 +1,17 @@
+dataset,H,system,diff_pp,seeds_negative
+bloodmnist,150,tri_all,-0.6874517119867344,8
+bloodmnist,150,cosserver_only,-6.121449344808496,10
+bloodmnist,150,cos_bin,-3.122029922640472,10
+bloodmnist,150,fltrust,-1.8018233015406397,9
+bloodmnist,250,tri_all,-2.318978613738069,10
+bloodmnist,250,cosserver_only,-5.342014631997107,10
+bloodmnist,250,cos_bin,-4.6882516890148755,10
+bloodmnist,250,fltrust,-1.6411010519496012,7
+bloodmnist,300,tri_all,-1.7887015246673792,10
+bloodmnist,300,cosserver_only,-4.332605592032355,9
+bloodmnist,300,cos_bin,-2.5669607244032027,9
+bloodmnist,300,fltrust,0.16790813410181513,5
+mnist,150,tri_all,-0.9796842105263157,8
+mnist,150,cosserver_only,-3.355526315789472,10
+mnist,150,cos_bin,-4.063157894736843,10
+mnist,150,fltrust,-9.454473684210527,10

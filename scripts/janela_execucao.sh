@@ -9,7 +9,8 @@
 set -u
 PGID=${1:?launcher PGID}
 NOME=${2:?grid name}
-LOG=${3:-results/janela_execucao.log}
+LOG=${3:-results/$NOME/logs/window.log}
+mkdir -p "$(dirname "$LOG")"
 estado=rodando
 while pgrep -g "$PGID" >/dev/null 2>&1; do
   h=$((10#$(date +%H)))

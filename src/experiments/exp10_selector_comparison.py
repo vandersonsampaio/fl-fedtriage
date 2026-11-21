@@ -238,7 +238,7 @@ class FedStrategistGridLearner(AttackedFederatedLearner):
         strategy_name = self.bandit.select_action(tuple(state))
 
         server_root = root_data or self._carve_root(participants[0])
-        server_update = self._make_model(n_feat).fit(server_root["X"], server_root["y"])
+        server_update = self._fit_server(self._make_model(n_feat), server_root, participants)
         sample_sizes = [p.n_train for p in participants]
 
         n_byz = sum(1 for b in _is_byz_list if b)
@@ -497,7 +497,7 @@ class DiscreteWithAdaAggRLDetectorLearner(AttackedFederatedLearner):
         strategy_name = self.bandit.select_action(tuple(mean_state))
 
         server_root = root_data or self._carve_root(participants[0])
-        server_update = self._make_model(n_feat).fit(server_root["X"], server_root["y"])
+        server_update = self._fit_server(self._make_model(n_feat), server_root, participants)
         sample_sizes = [p.n_train for p in participants]
 
         n_byz = sum(1 for b in _is_byz_list if b)

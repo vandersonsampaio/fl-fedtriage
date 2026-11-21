@@ -1,0 +1,16 @@
+dataset,model,system,alpha,attack_type,seed,round,accuracy,sec
+mnist,logistic,median,0.5,low_mag_backdoor,72,1,0.6669000000000002,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,2,0.8042,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,3,0.8433999999999999,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,4,0.86,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,5,0.8704000000000001,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,6,0.875,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,7,0.8801,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,8,0.884,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,9,0.8853,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,10,0.8888,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,11,0.8907,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,12,0.8923000000000002,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,13,0.8944999999999999,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,14,0.8956,52.385687828063965
+mnist,logistic,median,0.5,low_mag_backdoor,72,15,0.8966000000000001,52.385687828063965

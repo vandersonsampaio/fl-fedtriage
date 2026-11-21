@@ -243,3 +243,10 @@ src/fl/local_trainer.py
 src/fl/server.py
 src/xai/tests/
 results/*/raw/grid.pgid
+
+# Local planning notes (not versioned)
+plans/
+
+# Grid launcher logs and job scripts
+results/*/logs/
+results/*/logs_*/

@@ -1,0 +1,43 @@
+=== mnist: candidates vs references (diff in p.p., paired by cell and seed) ===
+  H candidate              reference  n_seeds  acc_candidate  acc_reference  diff_pp  p_wilcoxon  p_tost
+150   tri_all   best_single(cos_bin)       10         0.8853         0.8761   0.9169      0.0020  0.2844
+150   tri_all oracle_single_per_cell       10         0.8853         0.8892  -0.3985      0.0098  0.0008
+150   tri_all         cosserver_only       10         0.8853         0.8701   1.5172      0.0020  0.9731
+150   tri_all                cos_bin       10         0.8853         0.8761   0.9169      0.0020  0.2844
+150   tri_all                 sr_bin       10         0.8853         0.8534   3.1823      0.0020  1.0000
+150   tri_all                fltrust       10         0.8853         0.8716   1.3630      0.0039  0.9478
+150   tri_all                  flame       10         0.8853         0.8505   3.4724      0.0020  1.0000
+150   tri_all                 fedavg       10         0.8853         0.7531  13.2106      0.0020  1.0000
+150   tri_all           trimmed_mean       10         0.8853         0.7556  12.9606      0.0020  1.0000
+150   tri_all                 median       10         0.8853         0.7440  14.1237      0.0020  1.0000
+150   tri_all             clustering       10         0.8853         0.8243   6.0929      0.0020  1.0000
+150   tri_all                   krum       10         0.8853         0.5572  32.8024      0.0020  1.0000
+150   tri_all         oracle_uniform       10         0.8853         0.8982  -1.2984      0.0020  0.9655
+
+=== mnist: per cell vs the best single signal, H = 150 ===
+candidate               tri_all
+alpha attack_type              
+0.05  gaussian_noise      -1.98
+      krum_collusion       3.27
+      label_flipping      -5.66
+      low_mag_backdoor     3.37
+      sign_flipping        1.61
+      trim_attack          1.55
+0.10  gaussian_noise       1.79
+      krum_collusion       0.03
+      label_flipping      -2.30
+      low_mag_backdoor     1.95
+      sign_flipping        1.16
+      trim_attack          1.32
+0.50  fltrust_aligned     13.03
+      gaussian_noise       1.14
+      krum_collusion       0.29
+      label_flipping      -3.91
+      low_mag_backdoor     1.64
+      sign_flipping       -0.70
+      trim_attack         -0.19
+
+wins / ties / losses (beyond 2 SE):
+verdict    loss  tie  win
+candidate                
+tri_all       4    8    7

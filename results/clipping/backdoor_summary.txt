@@ -1,0 +1,11 @@
+=== bloodmnist: accuracy and ASR at H = 150 ===
+             accuracy                  asr            
+alpha            0.05   0.10   0.50   0.05 0.10   0.50
+system                                                
+tri_all_clip    0.626  0.492  0.703  0.725  1.0  0.802
+
+=== mnist: accuracy and ASR at H = 150 ===
+             accuracy                  asr              
+alpha            0.05   0.10   0.50   0.05   0.10   0.50
+system                                                  
+tri_all_clip    0.901  0.907  0.917  0.979  0.995  0.999

@@ -134,12 +134,12 @@ def build_learner_cls():
     return DecompLearner
 
 
-def run(variant: str, seed: int):
+def run(variant: str, seed: int, out: str = OUT):
     from src.experiments.exp9_dominance_grid import BLIND_ATTACKS, INFORMED_ATTACKS, _split_name
     from src.utils.data_loader import load_dataset_participants
 
-    os.makedirs(f"{OUT}/raw", exist_ok=True)
-    path = f"{OUT}/raw/{variant}_seed{seed}.csv"
+    os.makedirs(f"{out}/raw", exist_ok=True)
+    path = f"{out}/raw/{variant}_seed{seed}.csv"
     if os.path.exists(path):
         print(f"{path} already exists, skipping")
         return
@@ -273,12 +273,13 @@ def main():
     r = sub.add_parser("run")
     r.add_argument("--variant", required=True, choices=VARIANTS)
     r.add_argument("--seed", type=int, required=True)
+    r.add_argument("--out", default=OUT, help="experiment folder; CSVs go to <out>/raw/")
     an = sub.add_parser("analisar")
     an.add_argument("--raw_dir", default=f"{OUT}/raw")
     an.add_argument("--out", default=f"{OUT}/analise.txt")
     a = p.parse_args()
     if a.cmd == "run":
-        run(a.variant, a.seed)
+        run(a.variant, a.seed, a.out)
     else:
         analisar(a.raw_dir, a.out)
 

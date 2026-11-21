@@ -1,0 +1,75 @@
+=== bloodmnist: candidates vs references (diff in p.p., paired by cell and seed) ===
+  H    candidate                   reference  n_seeds  acc_candidate  acc_reference  diff_pp  p_wilcoxon  p_tost
+250      tri_all        best_single(cos_bin)        5         0.6497         0.6235   2.6225      0.0625  0.9804
+250      tri_all      oracle_single_per_cell        5         0.6497         0.6472   0.2495      0.8125  0.1215
+250      tri_all              cosserver_only        5         0.6497         0.6135   3.6171      0.0625  0.9611
+250      tri_all                     cos_bin        5         0.6497         0.6235   2.6225      0.0625  0.9804
+250      tri_all                      sr_bin        5         0.6497         0.5648   8.4901      0.0625  1.0000
+250      tri_all                       flame        5         0.6497         0.5897   6.0002      0.0625  0.9996
+250      tri_all               flame_nonoise        5         0.6497         0.5873   6.2375      0.0625  0.9994
+250      tri_all                cos_bin_clip        5         0.6497         0.6154   3.4320      0.0625  0.9851
+250      tri_all                     fltrust        5         0.6497         0.5960   5.3674      0.0625  0.9818
+250      tri_all                      fedavg        5         0.6497         0.5697   8.0015      0.0625  0.9999
+250      tri_all              oracle_uniform        5         0.6497         0.6669  -1.7218      0.0625  0.9451
+250 tri_all_clip        best_single(cos_bin)        5         0.6303         0.6235   0.6875      0.8125  0.3508
+250 tri_all_clip      oracle_single_per_cell        5         0.6303         0.6472  -1.6856      0.0625  0.9327
+250 tri_all_clip              cosserver_only        5         0.6303         0.6135   1.6820      0.3125  0.7384
+250 tri_all_clip                     cos_bin        5         0.6303         0.6235   0.6875      0.8125  0.3508
+250 tri_all_clip                      sr_bin        5         0.6303         0.5648   6.5550      0.0625  0.9998
+250 tri_all_clip                       flame        5         0.6303         0.5897   4.0652      0.0625  0.9993
+250 tri_all_clip               flame_nonoise        5         0.6303         0.5873   4.3025      0.0625  0.9993
+250 tri_all_clip                cos_bin_clip        5         0.6303         0.6154   1.4969      0.0625  0.7758
+250 tri_all_clip                     fltrust        5         0.6303         0.5960   3.4323      0.1875  0.8987
+250 tri_all_clip                      fedavg        5         0.6303         0.5697   6.0665      0.0625  1.0000
+250 tri_all_clip              oracle_uniform        5         0.6303         0.6669  -3.6568      0.0625  1.0000
+300      tri_all best_single(cosserver_only)        5         0.6460         0.6204   2.5664      0.1250  0.8696
+300      tri_all      oracle_single_per_cell        5         0.6460         0.6409   0.5159      0.6250  0.2359
+300      tri_all              cosserver_only        5         0.6460         0.6204   2.5664      0.1250  0.8696
+300      tri_all                     cos_bin        5         0.6460         0.6092   3.6779      0.0625  0.9640
+300      tri_all                      sr_bin        5         0.6460         0.5662   7.9868      0.0625  0.9998
+300      tri_all                       flame        5         0.6460         0.5932   5.2824      0.0625  0.9998
+300      tri_all               flame_nonoise        5         0.6460         0.5950   5.0975      0.0625  0.9999
+300      tri_all                cos_bin_clip        5         0.6460         0.6127   3.3355      0.0625  0.9859
+300      tri_all                     fltrust        5         0.6460         0.6115   3.4565      0.1250  0.8851
+300      tri_all                      fedavg        5         0.6460         0.5701   7.5921      0.0625  0.9999
+300      tri_all              oracle_uniform        5         0.6460         0.6672  -2.1165      0.0625  0.9994
+300 tri_all_clip best_single(cosserver_only)        5         0.6331         0.6204   1.2790      0.4375  0.6012
+300 tri_all_clip      oracle_single_per_cell        5         0.6331         0.6409  -0.7715      0.3125  0.3202
+300 tri_all_clip              cosserver_only        5         0.6331         0.6204   1.2790      0.4375  0.6012
+300 tri_all_clip                     cos_bin        5         0.6331         0.6092   2.3905      0.1250  0.9021
+300 tri_all_clip                      sr_bin        5         0.6331         0.5662   6.6994      0.0625  0.9990
+300 tri_all_clip                       flame        5         0.6331         0.5932   3.9950      0.0625  0.9992
+300 tri_all_clip               flame_nonoise        5         0.6331         0.5950   3.8101      0.0625  0.9982
+300 tri_all_clip                cos_bin_clip        5         0.6331         0.6127   2.0481      0.0625  0.9341
+300 tri_all_clip                     fltrust        5         0.6331         0.6115   2.1691      0.4375  0.7057
+300 tri_all_clip                      fedavg        5         0.6331         0.5701   6.3047      0.0625  0.9999
+300 tri_all_clip              oracle_uniform        5         0.6331         0.6672  -3.4039      0.0625  0.9990
+
+=== bloodmnist: per cell vs the best single signal, H = 300 ===
+candidate               tri_all  tri_all_clip
+alpha attack_type                            
+0.05  gaussian_noise      10.79          8.32
+      krum_collusion       7.95          1.90
+      label_flipping       8.17          3.67
+      low_mag_backdoor     9.90          8.26
+      sign_flipping      -13.85          3.61
+      trim_attack         12.59          4.29
+0.10  gaussian_noise       3.19          0.71
+      krum_collusion       2.86         -0.02
+      label_flipping      -0.33         -2.15
+      low_mag_backdoor    -4.95         -9.29
+      sign_flipping       -3.92         -5.25
+      trim_attack          2.51         -0.45
+0.50  fltrust_aligned      5.87          5.85
+      gaussian_noise       3.50          2.26
+      krum_collusion       2.56          0.92
+      label_flipping      -1.58          0.11
+      low_mag_backdoor     2.10          2.77
+      sign_flipping        1.32          0.46
+      trim_attack          0.09         -1.66
+
+wins / ties / losses (beyond 2 SE):
+verdict       loss  tie  win
+candidate                   
+tri_all          3    9    7
+tri_all_clip     4   11    4

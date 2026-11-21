@@ -1,0 +1,48 @@
+=== bloodmnist: candidates vs references (diff in p.p., paired by cell and seed) ===
+  H    candidate                   reference  n_seeds  acc_candidate  acc_reference  diff_pp  p_wilcoxon  p_tost
+250 tri_all_clip        best_single(cos_bin)        5         0.6303         0.6235   0.6875      0.8125  0.3508
+250 tri_all_clip      oracle_single_per_cell        5         0.6303         0.6472  -1.6856      0.0625  0.9327
+250 tri_all_clip              cosserver_only        5         0.6303         0.6135   1.6820      0.3125  0.7384
+250 tri_all_clip                     cos_bin        5         0.6303         0.6235   0.6875      0.8125  0.3508
+250 tri_all_clip                      sr_bin        5         0.6303         0.5648   6.5550      0.0625  0.9998
+250 tri_all_clip                     tri_all        5         0.6303         0.6497  -1.9350      0.0625  0.9754
+250 tri_all_clip                     fltrust        5         0.6303         0.5960   3.4323      0.1875  0.8987
+250 tri_all_clip                      fedavg        5         0.6303         0.5697   6.0665      0.0625  1.0000
+250 tri_all_clip              oracle_uniform        5         0.6303         0.6669  -3.6568      0.0625  1.0000
+300 tri_all_clip best_single(cosserver_only)        5         0.6331         0.6204   1.2790      0.4375  0.6012
+300 tri_all_clip      oracle_single_per_cell        5         0.6331         0.6409  -0.7715      0.3125  0.3202
+300 tri_all_clip              cosserver_only        5         0.6331         0.6204   1.2790      0.4375  0.6012
+300 tri_all_clip                     cos_bin        5         0.6331         0.6092   2.3905      0.1250  0.9021
+300 tri_all_clip                      sr_bin        5         0.6331         0.5662   6.6994      0.0625  0.9990
+300 tri_all_clip                     tri_all        5         0.6331         0.6460  -1.2874      0.0625  0.8235
+300 tri_all_clip                     fltrust        5         0.6331         0.6115   2.1691      0.4375  0.7057
+300 tri_all_clip                      fedavg        5         0.6331         0.5701   6.3047      0.0625  0.9999
+300 tri_all_clip              oracle_uniform        5         0.6331         0.6672  -3.4039      0.0625  0.9990
+
+=== bloodmnist: per cell vs the best single signal, H = 300 ===
+candidate               tri_all_clip
+alpha attack_type                   
+0.05  gaussian_noise            8.32
+      krum_collusion            1.90
+      label_flipping            3.67
+      low_mag_backdoor          8.26
+      sign_flipping             3.61
+      trim_attack               4.29
+0.10  gaussian_noise            0.71
+      krum_collusion           -0.02
+      label_flipping           -2.15
+      low_mag_backdoor         -9.29
+      sign_flipping            -5.25
+      trim_attack              -0.45
+0.50  fltrust_aligned           5.85
+      gaussian_noise            2.26
+      krum_collusion            0.92
+      label_flipping            0.11
+      low_mag_backdoor          2.77
+      sign_flipping             0.46
+      trim_attack              -1.66
+
+wins / ties / losses (beyond 2 SE):
+verdict       loss  tie  win
+candidate                   
+tri_all_clip     4   11    4

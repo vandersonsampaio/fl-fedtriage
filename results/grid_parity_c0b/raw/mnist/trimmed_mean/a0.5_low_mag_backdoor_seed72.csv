@@ -1,0 +1,16 @@
+dataset,model,system,alpha,attack_type,seed,round,accuracy,sec
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,1,0.6834,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,2,0.8084,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,3,0.8474,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,4,0.8638,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,5,0.8727,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,6,0.8779,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,7,0.8821000000000001,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,8,0.8855999999999999,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,9,0.8882000000000001,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,10,0.891,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,11,0.8932,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,12,0.8942,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,13,0.8959000000000001,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,14,0.8972999999999999,16.524019479751587
+mnist,logistic,trimmed_mean,0.5,low_mag_backdoor,72,15,0.8985999999999998,16.524019479751587
