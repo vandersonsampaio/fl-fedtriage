@@ -1,0 +1,15 @@
+H1' side (BloodMNIST, H=250, root 20): contrast 2 = +6.72 [+2.47; +10.97] (best@par cos_bin), contrast 3 = +7.31 (best@nat sr_bin) -> not at risk
+MNIST side (H=150, root 20): tri_all@par - cos_bin@par = +3.97, CI90 [+2.77; +5.16] -> not at risk
+
+bloodmnist tri_all@nat: Byzantine included 0.562, honest excluded 0.083, collapses (D1 definition) 25/95
+bloodmnist cos_bin@nat: Byzantine included 0.236, honest excluded 0.480, collapses (D1 definition) 61/95
+bloodmnist cosserver_only@nat: Byzantine included 0.216, honest excluded 0.477, collapses (D1 definition) 38/95
+bloodmnist tri_all@par: Byzantine included 0.528, honest excluded 0.079, collapses (D1 definition) 24/95
+bloodmnist cos_bin@par: Byzantine included 0.283, honest excluded 0.470, collapses (D1 definition) 62/95
+bloodmnist cosserver_only@par: Byzantine included 0.265, honest excluded 0.464, collapses (D1 definition) 50/95
+mnist tri_all@nat: Byzantine included 0.535, honest excluded 0.102, collapses (D1 definition) 20/95
+mnist cos_bin@nat: Byzantine included 0.316, honest excluded 0.472, collapses (D1 definition) 6/95
+mnist cosserver_only@nat: Byzantine included 0.313, honest excluded 0.466, collapses (D1 definition) 5/95
+mnist tri_all@par: Byzantine included 0.524, honest excluded 0.089, collapses (D1 definition) 14/95
+mnist cos_bin@par: Byzantine included 0.357, honest excluded 0.498, collapses (D1 definition) 18/95
+mnist cosserver_only@par: Byzantine included 0.344, honest excluded 0.478, collapses (D1 definition) 7/95
